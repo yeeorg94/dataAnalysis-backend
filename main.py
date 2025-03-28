@@ -176,5 +176,6 @@ if __name__ == "__main__":
         log_level=config.LOG_LEVEL.lower(),  # Log level
         workers=1,                   # Number of worker processes
         log_config=None,             # 禁用 uvicorn 默认日志配置
-        access_log=False             # 禁用 uvicorn 访问日志
+        access_log=False,            # 禁用 uvicorn 访问日志
+        openapi_version="3.0.2"
     )
