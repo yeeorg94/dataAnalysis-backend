@@ -1,0 +1,52 @@
+# 以守护进程方式运行 API 服务
+
+要在后台运行服务并将所有日志重定向到文件，请执行以下命令：
+
+```bash
+# 确保当前目录是项目根目录
+cd /path/to/project
+
+# 确保激活虚拟环境
+source venv/bin/activate
+
+# 确保日志目录存在
+mkdir -p logs
+
+# 获取当前日期作为日志文件名一部分
+DATE=$(date +"%Y-%m-%d")
+
+# 以后台方式运行应用，将标准输出和错误重定向到日志文件
+nohup python start_server.py > "logs/daemon_${DATE}.log" 2>&1 &
+
+# 保存进程 ID 以便后续停止服务
+echo $! > logs/server.pid
+```
+
+## 停止服务
+
+要停止后台运行的服务，使用：
+
+```bash
+kill $(cat logs/server.pid)
+```
+
+## 查看日志
+
+所有日志文件都在 `logs` 目录中，可以使用以下命令查看：
+
+```bash
+# 查看应用日志
+cat logs/app_*.log
+
+# 查看 RedBook 模块日志
+cat logs/redbook_*.log
+
+# 查看启动脚本日志
+cat logs/daemon_*.log
+```
+
+可以使用 `tail -f` 命令实时监控日志：
+
+```bash
+tail -f logs/app_$(date +"%Y-%m-%d").log
+``` 
