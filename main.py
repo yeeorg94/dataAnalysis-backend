@@ -1,8 +1,15 @@
+from typing import Optional
 from fastapi import FastAPI
+from pydantic import BaseModel
 import uvicorn
 import os
 import sys
 import logging
+
+class AnalyzeParams(BaseModel):
+    url: str
+    type: Optional[str] = "png"
+    format: Optional[str] = "json"
 
 # Add the project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -28,6 +35,10 @@ app = FastAPI(
         {
             "name": "xiaohongshu",
             "description": "小红书数据提取与处理接口",
+        },
+        {
+            "name": "tiktok",
+            "description": "抖音数据提取与处理接口",
         },
         # 其他模块标签可以在这里添加
         # {
@@ -67,6 +78,39 @@ async def health_check():
     logger.info("执行健康检查")
     return {"status": "健康", "环境": current_env}
 
+@app.post("/analyze")
+async def analyze(params: AnalyzeParams):
+    url = params.url
+    # 判断url是否包含小红书或抖音
+    if any(keyword in url for keyword in config.APP_TYPE_KEYWORD['xiaohongshu']):
+        app_type = 'xiaohongshu'
+    elif any(keyword in url for keyword in config.APP_TYPE_KEYWORD['douyin']):
+        app_type = 'douyin'
+    else:
+        raise ValueError("不支持的URL")
+    
+    # 根据app_type选择对应的模块
+    if app_type == 'xiaohongshu':
+        from src.app.xiaohongshu.index import Xiaohongshu
+        xiaohongshu = Xiaohongshu(url, params.type)
+        return {
+            'code': 200,
+            'data': xiaohongshu.to_dict(),
+            'status': 'success',
+            'message': '获取成功'
+        }
+    elif app_type == 'douyin':
+        from src.app.tiktok.index import Tiktok
+        tiktok = Tiktok(url, params.type)
+        return {
+            'code': 200,
+            'data': tiktok.to_dict(),
+            'status': 'success',
+            'message': '获取成功'
+        }
+    else:
+        raise ValueError("不支持的URL")
+    
 # 注册所有路由模块
 from src.module import register_routes
 register_routes(app)

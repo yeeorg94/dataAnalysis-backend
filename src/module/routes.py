@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 # 导入各个模块的路由
 from .xiaohongshu import router as xiaohongshu_router
-
+from .tiktok import router as tiktok_router
 def register_routes(app: FastAPI):
     """
     注册所有路由模块到 FastAPI 应用
@@ -12,6 +12,8 @@ def register_routes(app: FastAPI):
     """
     # 注册小红书路由
     app.include_router(xiaohongshu_router)
+    # 注册抖音路由
+    app.include_router(tiktok_router)
     
     # 在这里注册其他路由模块
     # app.include_router(douyin_router)
