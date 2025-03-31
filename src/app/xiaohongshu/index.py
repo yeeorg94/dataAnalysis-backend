@@ -79,6 +79,7 @@ class Xiaohongshu:
                         data_text = script.string.split('window.__INITIAL_STATE__=')[1]
                         # 把字符串中的undefined替换为null
                         data_text = data_text.replace('undefined', 'null')
+                        logger.info(f"提取到的数据: {data_text}")
                         try:
                             self.data = json.loads(data_text)
                             logger.info("成功从脚本标签中提取数据")
@@ -148,11 +149,20 @@ class Xiaohongshu:
         except Exception as e:
             logger.error(f"获取 HTML 内容出错: {str(e)}", exc_info=True)
             return ""
+        
+    def get_video(self):
+        """获取视频"""
+        try:
+            firstNoteId = self.data['note']['firstNoteId']
+            video_info = self.data['note']['noteDetailMap'][firstNoteId]['note'].get('video', {}).get('media',{})
+            masterUrl = video_info.get('stream',{}).get('h264',[{}])[0].get('masterUrl')
+            return masterUrl
+        except:
+            return ""
             
     def to_dict(self):
         """将对象转换为字典，用于 API 返回"""
         try:
-            logger.info(f"转换为字典: {self.data}")
             firstNoteId = self.data['note']['firstNoteId']
             note_data = self.data['note']['noteDetailMap'][firstNoteId]['note']
             image_list = []
@@ -160,8 +170,12 @@ class Xiaohongshu:
             for image in note_data['imageList']:
                 image_list.append(image['urlDefault'])
                 # 判断stream['h264'][0]['masterUrl']是否存在
-                if image['stream']['h264'][0]['masterUrl']:
-                    live_list.append(image['stream']['h264'][0]['masterUrl'])
+                try:
+                    live_url = image.get('stream', {}).get('h264', [{}])[0].get('masterUrl')
+                    if live_url:
+                        live_list.append(live_url)
+                except:
+                    continue
             result = {
                 "data": {
                     "url": self.url,
@@ -170,6 +184,7 @@ class Xiaohongshu:
                     "description":note_data['desc'],
                     "image_list": Image(image_list, self.type).to_dict(),
                     "live_list": live_list,
+                    "video": self.get_video(),
                     "app_type": 'xiaohongshu'
                 }
             }
