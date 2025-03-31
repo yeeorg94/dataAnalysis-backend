@@ -1,5 +1,5 @@
 # src 包初始化
-from .app.redBook.index import RedBook
-from .app.redBook.image import Image
+from .app.xiaohongshu.index import Xiaohongshu
+from .app.xiaohongshu.image import Image
 
-__all__ = ["RedBook", "Image"]
+__all__ = ["Xiaohongshu", "Image"]

@@ -75,9 +75,9 @@ def get_app_logger():
     """获取应用主日志器"""
     return setup_logger('app')
 
-def get_redbook_logger():
+def get_xiaohongshu_logger():
     """获取小红书模块日志器"""
-    return setup_logger('redbook')
+    return setup_logger('xiaohongshu')
 
 def get_tiktok_logger():
     """获取抖音模块日志器"""

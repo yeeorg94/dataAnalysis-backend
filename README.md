@@ -13,14 +13,16 @@
 ├── requirements.txt     # 依赖列表
 ├── logs/                # 日志目录
 └── src/                 # 源代码目录
-    ├── app/             # 应用模块
-    │   ├── redBook/     # 小红书模块
-    │   └── tiktok/      # 抖音模块
-    ├── utils/           # 工具模块
-    │   ├── config.py    # 配置管理
-    │   ├── logger.py    # 日志管理
-    │   └── index.py     # 工具函数
-    └── module/          # 其他模块
+    ├── app/             # 应用核心模块
+    │   ├── xiaohongshu/ # 小红书数据处理模块
+    │   └── tiktok/      # 抖音数据处理模块
+    ├── module/          # API路由模块
+    │   ├── xiaohongshu/ # 小红书API路由
+    │   └── routes.py    # 路由注册中心
+    └── utils/           # 工具模块
+        ├── config.py    # 配置管理
+        ├── logger.py    # 日志管理
+        └── index.py     # 工具函数
 ```
 
 ## 环境配置
@@ -115,17 +117,29 @@ echo $! > logs/server.pid
 
 ## API 端点
 
+### 核心端点
 - `GET /`: API 根端点，返回服务状态
 - `GET /health`: 健康检查端点
-- `GET /redbook?url=<url>`: 获取小红书数据（GET 方法）
-- `POST /getRedBook`: 获取小红书数据（POST 方法）
+
+### 小红书模块
+- `GET /xiaohongshu?url=<url>`: 获取小红书数据（GET 方法）
+- `POST /xiaohongshu`: 获取小红书数据（POST 方法）
+- `POST /getXiaohongshu`: 获取小红书数据（向后兼容）
+
+## 扩展新模块
+
+项目使用模块化的设计，可以轻松添加新的API模块：
+
+1. 在 `src/module/` 下创建新模块文件夹（如 `douyin`）
+2. 创建模块的路由文件 `routes.py`
+3. 在 `src/module/routes.py` 中注册新模块
 
 ## 日志
 
 所有日志保存在 `logs` 目录下：
 
 - `app_*.log`: 应用主日志
-- `redbook_*.log`: 小红书模块日志
+- `xiaohongshu_*.log`: 小红书模块日志
 - `tiktok_*.log`: 抖音模块日志
 - `system_*.log`: 系统日志
 
@@ -136,7 +150,7 @@ echo $! > logs/server.pid
 tail -f logs/app_$(date +"%Y-%m-%d").log
 
 # 查看小红书模块日志
-tail -f logs/redbook_$(date +"%Y-%m-%d").log
+tail -f logs/xiaohongshu_$(date +"%Y-%m-%d").log
 ```
 
 ## API 文档

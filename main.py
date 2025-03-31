@@ -1,10 +1,8 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 import uvicorn
 import os
 import sys
 import logging
-from typing import Optional
-from pydantic import BaseModel
 
 # Add the project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -15,9 +13,6 @@ from src.utils import get_app_logger, config, get_environment, EnvType
 # 获取应用日志器
 logger = get_app_logger()
 
-# 现在导入模块
-from src import RedBook
-
 # 根据当前环境记录信息
 current_env = get_environment()
 logger.info(f"应用启动于 {current_env} 环境")
@@ -27,7 +22,19 @@ app = FastAPI(
     title=config.API_TITLE,
     description=config.API_DESCRIPTION,
     version=config.API_VERSION,
-    debug=config.DEBUG
+    debug=config.DEBUG,
+    # 添加路由分组的标签描述
+    openapi_tags=[
+        {
+            "name": "xiaohongshu",
+            "description": "小红书数据提取与处理接口",
+        },
+        # 其他模块标签可以在这里添加
+        # {
+        #    "name": "douyin",
+        #    "description": "抖音数据提取与处理接口",
+        # },
+    ]
 )
 
 # 应用启动和关闭事件
@@ -40,17 +47,6 @@ async def startup_event():
 async def shutdown_event():
     """应用关闭时的事件处理"""
     logger.info("API 服务关闭")
-
-# 示例用法 - 注意需要捕获异常以防止错误
-# try:
-#     sample_text = "http://xhslink.com/a/HaDbFXetr8F8"
-#     redbook_instance = RedBook(sample_text)
-#     print(f"处理的URL: {redbook_instance.url}")
-#     # 仅当获取到 HTML 时打印长度，避免打印大量内容
-#     if hasattr(redbook_instance, 'html') and redbook_instance.html:
-#         print(f"获取的HTML长度: {len(redbook_instance.html)}")
-# except Exception as e:
-#     print(f"初始化 RedBook 时发生错误: {str(e)}")
 
 # Root endpoint
 @app.get("/")
@@ -71,83 +67,9 @@ async def health_check():
     logger.info("执行健康检查")
     return {"status": "健康", "环境": current_env}
 
-# 定义请求参数模型
-class RedbookParams(BaseModel):
-    url: str
-    type: Optional[str] = "png"
-    format: Optional[str] = "json"
-
-# API endpoint for RedBook
-@app.post("/getRedBook")
-async def process_redbook(params: RedbookParams):
-    """
-    处理小红书 URL 并返回数据
-    
-    参数:
-    - url: 小红书链接
-    - format: 返回格式，支持 "json" 或 "html"
-    """
-    logger.info(f"处理小红书URL (POST): {params.url}")
-    try:
-        redbook = RedBook(params.url, params.type)
-        
-        if params.format.lower() == "html":
-            # 返回 HTML 内容
-            logger.info(f"返回HTML内容，长度: {len(redbook.html) if redbook.html else 0}")
-            return {
-                'code': 200,
-                'data': redbook.html,
-                'status': 'success',
-                'message': '获取成功'
-            }
-        else:
-            # 返回结构化数据
-            logger.info("返回结构化数据")
-            return {
-                'code': 200,
-                'data': redbook.to_dict(),
-                'status': 'success',
-                'message': '获取成功'
-            }
-    except Exception as e:
-        logger.error(f"处理小红书URL出错: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-# 也添加一个 GET 方法的端点，方便直接在浏览器中测试
-@app.get("/redbook")
-async def get_redbook(url: str, format: Optional[str] = "json"):
-    """
-    处理小红书 URL 并返回数据（GET 方法）
-    
-    参数:
-    - url: 小红书链接
-    - format: 返回格式，支持 "json" 或 "html"
-    """
-    logger.info(f"处理小红书URL (GET): {url}")
-    try:
-        redbook = RedBook(url)
-        
-        if format.lower() == "html":
-            # 返回 HTML 内容
-            logger.info(f"返回HTML内容，长度: {len(redbook.html) if redbook.html else 0}")
-            return {
-                'code': 200,
-                'data': redbook.html,
-                'status': 'success',
-                'message': '获取成功'
-            }
-        else:
-            # 返回结构化数据
-            logger.info("返回结构化数据")
-            return {
-                'code': 200,
-                'data': redbook.to_dict(),
-                'status': 'success',
-                'message': '获取成功'
-            }
-    except Exception as e:
-        logger.error(f"处理小红书URL出错: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+# 注册所有路由模块
+from src.module import register_routes
+register_routes(app)
 
 # 配置 uvicorn 使用文件日志而不是控制台输出
 def configure_uvicorn_logging():

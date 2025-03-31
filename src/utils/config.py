@@ -31,6 +31,11 @@ class BaseConfig:
     LOG_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
     LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'logs')
     LOG_BACKUP_COUNT = 30
+    # 关键词映射
+    APP_TYPE_KEYWORD = {
+        "xiaohongshu": ['小红书', 'xhs','xiaohongshu'],
+        "douyin": ['抖音', 'douyin', 'dy']
+    }
 
 # 开发环境配置
 class DevelopmentConfig(BaseConfig):

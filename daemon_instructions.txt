@@ -38,8 +38,8 @@ kill $(cat logs/server.pid)
 # 查看应用日志
 cat logs/app_*.log
 
-# 查看 RedBook 模块日志
-cat logs/redbook_*.log
+# 查看小红书模块日志
+cat logs/xiaohongshu_*.log
 
 # 查看启动脚本日志
 cat logs/daemon_*.log

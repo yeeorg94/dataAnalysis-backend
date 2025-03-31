@@ -1,19 +1,20 @@
-from src.app.redBook.image import Image
-from src.utils import find_url, get_redbook_logger, config
+from src.app.xiaohongshu.image import Image
+from src.utils import find_url, get_xiaohongshu_logger, config
 import re
 import httpx
 from bs4 import BeautifulSoup
 import json
 
 # 获取小红书模块的日志器
-logger = get_redbook_logger()
+logger = get_xiaohongshu_logger()
 
-class RedBook:
+class Xiaohongshu:
     def __init__(self, text, type):
         try:
             self.text = text
             self.url = find_url(text)
             self.type = type
+            self.app_type_keyword = config.APP_TYPE_KEYWORD.get('xiaohongshu')
             if not self.url:
                 error_msg = f"无法从文本 '{text}' 中提取 URL"
                 logger.error(error_msg)
@@ -42,7 +43,7 @@ class RedBook:
                 logger.info(f"页面标题: {self.title}")
                 
                 # 尝试提取小红书数据（示例）
-                self.extract_redbook_data()
+                self.extract_xiaohongshu_data()
                 
             except Exception as e:
                 logger.error(f"获取 URL 内容时出错: {str(e)}", exc_info=True)
@@ -53,7 +54,7 @@ class RedBook:
                 self.data = {}
                 
         except Exception as e:
-            logger.error(f"RedBook 初始化错误: {str(e)}", exc_info=True)
+            logger.error(f"Xiaohongshu 初始化错误: {str(e)}", exc_info=True)
             # 设置一些默认值，避免后续处理出错
             self.url = None
             self.final_url = None
@@ -62,7 +63,7 @@ class RedBook:
             self.title = ""
             self.data = {}
     
-    def extract_redbook_data(self):
+    def extract_xiaohongshu_data(self):
         """尝试从 HTML 中提取小红书数据"""
         try:
             self.data = {}
@@ -151,20 +152,25 @@ class RedBook:
     def to_dict(self):
         """将对象转换为字典，用于 API 返回"""
         try:
-            logger.info(f"转换为字典: {type(self.data)}")
+            logger.info(f"转换为字典: {self.data}")
             firstNoteId = self.data['note']['firstNoteId']
             note_data = self.data['note']['noteDetailMap'][firstNoteId]['note']
-            logger.info(f"note_data: {note_data}")
             image_list = []
+            live_list = []
             for image in note_data['imageList']:
                 image_list.append(image['urlDefault'])
+                # 判断stream['h264'][0]['masterUrl']是否存在
+                if image['stream']['h264'][0]['masterUrl']:
+                    live_list.append(image['stream']['h264'][0]['masterUrl'])
             result = {
                 "data": {
                     "url": self.url,
                     "final_url": str(self.final_url) if self.final_url else None,
                     "title": self.title,
                     "description":note_data['desc'],
-                    "image_list": Image(image_list, self.type).to_dict()
+                    "image_list": Image(image_list, self.type).to_dict(),
+                    "live_list": live_list,
+                    "app_type": 'xiaohongshu'
                 }
             }
             return result
