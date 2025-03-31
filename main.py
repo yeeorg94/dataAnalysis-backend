@@ -74,6 +74,7 @@ async def health_check():
 # 定义请求参数模型
 class RedbookParams(BaseModel):
     url: str
+    type: Optional[str] = "png"
     format: Optional[str] = "json"
 
 # API endpoint for RedBook
@@ -88,7 +89,7 @@ async def process_redbook(params: RedbookParams):
     """
     logger.info(f"处理小红书URL (POST): {params.url}")
     try:
-        redbook = RedBook(params.url)
+        redbook = RedBook(params.url, params.type)
         
         if params.format.lower() == "html":
             # 返回 HTML 内容

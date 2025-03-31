@@ -1,3 +1,4 @@
+from src.app.redBook.image import Image
 from src.utils import find_url, get_redbook_logger, config
 import re
 import httpx
@@ -8,11 +9,11 @@ import json
 logger = get_redbook_logger()
 
 class RedBook:
-    def __init__(self, text):
+    def __init__(self, text, type):
         try:
             self.text = text
             self.url = find_url(text)
-            
+            self.type = type
             if not self.url:
                 error_msg = f"无法从文本 '{text}' 中提取 URL"
                 logger.error(error_msg)
@@ -75,6 +76,8 @@ class RedBook:
                         # logger.info(f"提取到了关键词{script}")
                         # 提取 JSON 数据
                         data_text = script.string.split('window.__INITIAL_STATE__=')[1]
+                        # 把字符串中的undefined替换为null
+                        data_text = data_text.replace('undefined', 'null')
                         try:
                             self.data = json.loads(data_text)
                             logger.info("成功从脚本标签中提取数据")
@@ -149,17 +152,19 @@ class RedBook:
         """将对象转换为字典，用于 API 返回"""
         try:
             logger.info(f"转换为字典: {type(self.data)}")
-            note_data = self.data['noteData']['data']['noteData']
+            firstNoteId = self.data['note']['firstNoteId']
+            note_data = self.data['note']['noteDetailMap'][firstNoteId]['note']
+            logger.info(f"note_data: {note_data}")
             image_list = []
             for image in note_data['imageList']:
-                image_list.append(image['url'])
+                image_list.append(image['urlDefault'])
             result = {
                 "data": {
                     "url": self.url,
                     "final_url": str(self.final_url) if self.final_url else None,
                     "title": self.title,
                     "description":note_data['desc'],
-                    "image_list": image_list
+                    "image_list": Image(image_list, self.type).to_dict()
                 }
             }
             return result
