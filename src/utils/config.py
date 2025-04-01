@@ -35,7 +35,8 @@ class BaseConfig:
     # 关键词映射
     APP_TYPE_KEYWORD = {
         "xiaohongshu": ['小红书', 'xhs','xiaohongshu'],
-        "douyin": ['抖音', 'douyin', 'dy']
+        "douyin": ['抖音', 'douyin', 'dy'],
+        "kuaishou": ['快手', 'kuaishou', 'ks']
     }
 
 # 开发环境配置

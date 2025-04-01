@@ -40,6 +40,10 @@ app = FastAPI(
             "name": "tiktok",
             "description": "抖音数据提取与处理接口",
         },
+        {
+            "name": "kuaishou",
+            "description": "快手数据提取与处理接口",
+        },
         # 其他模块标签可以在这里添加
         # {
         #    "name": "douyin",
@@ -86,6 +90,8 @@ async def analyze(params: AnalyzeParams):
         app_type = 'xiaohongshu'
     elif any(keyword in url for keyword in config.APP_TYPE_KEYWORD['douyin']):
         app_type = 'douyin'
+    elif any(keyword in url for keyword in config.APP_TYPE_KEYWORD['kuaishou']):
+        app_type = 'kuaishou'
     else:
         raise ValueError("不支持的URL")
     
@@ -93,21 +99,15 @@ async def analyze(params: AnalyzeParams):
     if app_type == 'xiaohongshu':
         from src.app.xiaohongshu.index import Xiaohongshu
         xiaohongshu = Xiaohongshu(url, params.type)
-        return {
-            'code': 200,
-            'data': xiaohongshu.to_dict(),
-            'status': 'success',
-            'message': '获取成功'
-        }
+        return xiaohongshu.to_dict()
     elif app_type == 'douyin':
         from src.app.tiktok.index import Tiktok
         tiktok = Tiktok(url, params.type)
-        return {
-            'code': 200,
-            'data': tiktok.to_dict(),
-            'status': 'success',
-            'message': '获取成功'
-        }
+        return tiktok.to_dict()
+    elif app_type == 'kuaishou':
+        from src.app.kuaishou.index import Kuaishou
+        kuaishou = Kuaishou(url, params.type)
+        return kuaishou.to_dict()
     else:
         raise ValueError("不支持的URL")
     

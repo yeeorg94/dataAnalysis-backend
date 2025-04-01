@@ -83,6 +83,10 @@ def get_tiktok_logger():
     """获取抖音模块日志器"""
     return setup_logger('tiktok')
 
+def get_kuaishou_logger():
+    """获取快手模块日志器"""
+    return setup_logger('kuaishou')
+
 def get_utils_logger():
     """获取工具模块日志器"""
     return setup_logger('utils')
