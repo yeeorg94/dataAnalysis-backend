@@ -77,7 +77,7 @@ class Tiktok:
                     "title": self.title,
                     "description":self.description,
                     "image_list": image_list,
-                    "video": video,
+                    "video": video.replace('playwm', 'play'),
                     "app_type": 'xiaohongshu'
                 }
             }
