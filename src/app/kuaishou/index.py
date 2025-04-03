@@ -121,7 +121,7 @@ class Kuaishou:
                 "description": self.description,
                 "image_list": self.image_list,
                 "video": self.video,
-                "app_type": "xiaohongshu",
+                "app_type": "kuaishou",
             }
             return Response.success(result, "获取成功")
         except Exception as e:

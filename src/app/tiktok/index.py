@@ -52,6 +52,7 @@ class Tiktok:
             for script in scripts:
                 if script.string and "window._ROUTER_DATA" in script.string:
                     data_text = script.string.split("window._ROUTER_DATA = ")[1]
+                    logger.info(f"data_text: {data_text}")
                     # 判断有没有note_(id)/page, 没有的话取video_(id)/page
                     loaderData = json.loads(data_text).get("loaderData", {})
                     if "note_(id)" in data_text:
@@ -113,7 +114,7 @@ class Tiktok:
                 "description": self.description,
                 "image_list": self.image_list,
                 "video": self.video,
-                "app_type": "xiaohongshu",
+                "app_type": "tiktok",
             }
             return Response.success(result, "获取成功")
         except Exception as e:

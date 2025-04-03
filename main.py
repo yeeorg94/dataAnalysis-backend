@@ -44,6 +44,18 @@ app = FastAPI(
             "name": "kuaishou",
             "description": "快手数据提取与处理接口",
         },
+        {
+            "name": "test",
+            "description": "测试数据提取与处理接口",
+        },
+        {
+            "name": "weibo",
+            "description": "微博数据提取与处理接口",
+        },
+        {
+            "name": "system",
+            "description": "系统接口",
+        },
         # 其他模块标签可以在这里添加
         # {
         #    "name": "douyin",

@@ -87,9 +87,21 @@ def get_kuaishou_logger():
     """获取快手模块日志器"""
     return setup_logger('kuaishou')
 
+def get_weibo_logger():
+    """获取微博模块日志器"""
+    return setup_logger('weibo')
+
+def get_test_logger():
+    """获取测试模块日志器"""
+    return setup_logger('test')
+
 def get_utils_logger():
     """获取工具模块日志器"""
     return setup_logger('utils')
+
+def get_system_logger():
+    """获取系统模块日志器"""
+    return setup_logger('system')
 
 # 配置根日志器，确保未捕获的日志也被记录
 def configure_root_logger():
