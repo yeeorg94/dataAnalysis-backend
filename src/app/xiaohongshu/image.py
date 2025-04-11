@@ -6,7 +6,11 @@ class Image:
     # 获取图片token
     @staticmethod
     def get_image_token(url):
-        return url.split("/")[-1].split("!")[0]
+        arr = url.split("/")
+        if "notes_pre_post" in arr:
+            return "/notes_pre_post/" + arr[-1].split("!")[0]
+        else:
+            return arr[-1].split("!")[0]
 
     # 生成webp链接
     @staticmethod
