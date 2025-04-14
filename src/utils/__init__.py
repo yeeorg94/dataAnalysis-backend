@@ -7,7 +7,8 @@ from .logger import (
     get_kuaishou_logger,
     get_weibo_logger,
     get_test_logger,
-    get_system_logger
+    get_system_logger,
+    get_analyze_logger
 )
 from .config import config, get_environment, EnvType
 from .response import Response
@@ -21,6 +22,7 @@ __all__ = [
     "get_weibo_logger",
     "get_test_logger",
     "get_system_logger",
+    "get_analyze_logger",
     "config",
     "get_environment",
     "EnvType",

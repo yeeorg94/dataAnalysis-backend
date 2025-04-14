@@ -36,7 +36,8 @@ class BaseConfig:
     APP_TYPE_KEYWORD = {
         "xiaohongshu": ['小红书', 'xhs','xiaohongshu'],
         "douyin": ['抖音', 'douyin', 'dy'],
-        "kuaishou": ['快手', 'kuaishou', 'ks']
+        "kuaishou": ['快手', 'kuaishou', 'ks'],
+        "weibo": ['微博', 'weibo', 'wb']
     }
 
 # 开发环境配置

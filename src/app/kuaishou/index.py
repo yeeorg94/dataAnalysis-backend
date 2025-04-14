@@ -61,7 +61,6 @@ class Kuaishou:
                     break
             self.get_dict_data()
         except Exception as e:
-            logger.error(f"提取快手内容失败: {e}")
             raise e
 
     def get_dict_data(self):

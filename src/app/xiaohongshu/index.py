@@ -22,7 +22,6 @@ class Xiaohongshu:
             self.app_type_keyword = config.APP_TYPE_KEYWORD.get("xiaohongshu")
             if not self.url:
                 error_msg = f"无法从文本 '{text}' 中提取 URL"
-                logger.error(error_msg)
                 raise ValueError(error_msg)
 
             # 获取重定向 URL
@@ -73,7 +72,6 @@ class Xiaohongshu:
                         data_text = script.string.split("window.__INITIAL_STATE__=")[1]
                         # 把字符串中的undefined替换为null
                         data_text = data_text.replace("undefined", "null")
-                        logger.debug(f"data_text: {data_text}")
                         try:
                             self.data_dict = json.loads(data_text)
                             self.get_image_list()
@@ -85,7 +83,6 @@ class Xiaohongshu:
                     except:
                         continue
         except Exception as e:
-            logger.error(f"提取数据时出错: {str(e)}", exc_info=True)
             self.data = {"error": str(e)}
 
     def get_meta_description(self):
@@ -95,7 +92,6 @@ class Xiaohongshu:
                 "meta", attrs={"name": "description"}
             ) or self.soup.find("meta", attrs={"property": "og:description"})
             description = meta.get("content", "") if meta else ""
-            logger.debug(f"元描述: {description[:50]}...")
             self.description = description
         except Exception as e:
             logger.error(f"获取元描述时出错: {str(e)}")

@@ -37,22 +37,11 @@ async def process_tiktok(params: TiktokParams):
         
         if params.format.lower() == "html":
             # 返回 HTML 内容
-            logger.info(f"返回HTML内容，长度: {len(tiktok.html) if tiktok.html else 0}")
-            return {
-                'code': 200,
-                'data': tiktok.html,
-                'status': 'success',
-                'message': '获取成功'
-            }
+            from src.utils.response import Response
+            return Response.success(tiktok.html, "获取成功")
         else:
             # 返回结构化数据
-            logger.info("返回结构化数据")
-            return {
-                'code': 200,
-                'data': tiktok.to_dict(),
-                'status': 'success',
-                'message': '获取成功'
-            }
+            return tiktok.to_dict()
     except Exception as e:
         logger.error(f"处理抖音URL出错: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

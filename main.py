@@ -56,6 +56,10 @@ app = FastAPI(
             "name": "system",
             "description": "系统接口",
         },
+        {
+            "name": "analyze",
+            "description": "聚合url处理",
+        },
         # 其他模块标签可以在这里添加
         # {
         #    "name": "douyin",
@@ -93,35 +97,6 @@ async def health_check():
     """健康检查端点"""
     logger.info("执行健康检查")
     return {"status": "健康", "环境": current_env}
-
-@app.post("/analyze")
-async def analyze(params: AnalyzeParams):
-    url = params.url
-    # 判断url是否包含小红书或抖音
-    if any(keyword in url for keyword in config.APP_TYPE_KEYWORD['xiaohongshu']):
-        app_type = 'xiaohongshu'
-    elif any(keyword in url for keyword in config.APP_TYPE_KEYWORD['douyin']):
-        app_type = 'douyin'
-    elif any(keyword in url for keyword in config.APP_TYPE_KEYWORD['kuaishou']):
-        app_type = 'kuaishou'
-    else:
-        raise ValueError("不支持的URL")
-    
-    # 根据app_type选择对应的模块
-    if app_type == 'xiaohongshu':
-        from src.app.xiaohongshu.index import Xiaohongshu
-        xiaohongshu = Xiaohongshu(url, params.type)
-        return xiaohongshu.to_dict()
-    elif app_type == 'douyin':
-        from src.app.tiktok.index import Tiktok
-        tiktok = Tiktok(url, params.type)
-        return tiktok.to_dict()
-    elif app_type == 'kuaishou':
-        from src.app.kuaishou.index import Kuaishou
-        kuaishou = Kuaishou(url, params.type)
-        return kuaishou.to_dict()
-    else:
-        raise ValueError("不支持的URL")
     
 # 注册所有路由模块
 from src.module import register_routes

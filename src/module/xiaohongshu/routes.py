@@ -37,22 +37,11 @@ async def process_xiaohongshu(params: XiaohongshuParams):
         
         if params.format.lower() == "html":
             # 返回 HTML 内容
-            logger.info(f"返回HTML内容，长度: {len(xiaohongshu.html) if xiaohongshu.html else 0}")
-            return {
-                'code': 200,
-                'data': xiaohongshu.html,
-                'status': 'success',
-                'message': '获取成功'
-            }
+            from src.utils.response import Response
+            return Response.success(xiaohongshu.html, "获取成功")
         else:
             # 返回结构化数据
-            logger.info("返回结构化数据")
-            return {
-                'code': 200,
-                'data': xiaohongshu.to_dict(),
-                'status': 'success',
-                'message': '获取成功'
-            }
+            return xiaohongshu.to_dict()
     except Exception as e:
         logger.error(f"处理小红书URL出错: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

@@ -7,6 +7,8 @@ from .weibo import router as weibo_router
 from .kuaishou import router as kuaishou_router
 from .test import router as test_router
 from .system import router as system_router
+from .analyze import router as analyze_router
+
 def register_routes(app: FastAPI):
     """
     注册所有路由模块到 FastAPI 应用
@@ -26,6 +28,8 @@ def register_routes(app: FastAPI):
     app.include_router(test_router)
     # 注册系统路由
     app.include_router(system_router)
+    # 注册聚合路由
+    app.include_router(analyze_router)
     
     # 在这里注册其他路由模块
     # app.include_router(douyin_router)

@@ -19,7 +19,6 @@ class Tiktok:
         self.video = ""
         if not self.url:
             error_msg = f"无法从文本 '{text}' 中提取 URL"
-            logger.error(error_msg)
             raise ValueError(error_msg)
         try:
             headers = {
@@ -52,7 +51,6 @@ class Tiktok:
             for script in scripts:
                 if script.string and "window._ROUTER_DATA" in script.string:
                     data_text = script.string.split("window._ROUTER_DATA = ")[1]
-                    logger.info(f"data_text: {data_text}")
                     # 判断有没有note_(id)/page, 没有的话取video_(id)/page
                     loaderData = json.loads(data_text).get("loaderData", {})
                     if "note_(id)" in data_text:
@@ -63,7 +61,6 @@ class Tiktok:
                     self.get_dict_data(data_dict)
                     break
         except Exception as e:
-            logger.error(f"提取抖音内容失败: {e}")
             raise e
 
     def get_dict_data(self, data_dict):
@@ -82,7 +79,6 @@ class Tiktok:
             if get_video_data:
                 self.get_video_data(get_video_data)
         except Exception as e:
-            logger.error(f"获取抖音内容失败: {e}")
             raise e
 
     def get_image_data(self, get_image_data):
@@ -91,7 +87,6 @@ class Tiktok:
             for item in get_image_data:
                 self.image_list.append(item.get("url_list", [])[0])
         except Exception as e:
-            logger.error(f"获取图片数据失败: {e}")
             raise e
 
     def get_video_data(self, get_video_data):
@@ -101,7 +96,6 @@ class Tiktok:
             video_url = video_data.get("url_list", [])[0] if video_data else ""
             self.video = video_url.replace("playwm", "play")
         except Exception as e:
-            logger.error(f"获取视频数据失败: {e}")
             raise e
 
     def to_dict(self):

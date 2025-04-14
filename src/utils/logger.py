@@ -103,6 +103,10 @@ def get_system_logger():
     """获取系统模块日志器"""
     return setup_logger('system')
 
+def get_analyze_logger():
+    """获取分析模块日志器"""
+    return setup_logger('analyze')
+
 # 配置根日志器，确保未捕获的日志也被记录
 def configure_root_logger():
     """配置根日志器，将所有未捕获的日志记录到文件"""
