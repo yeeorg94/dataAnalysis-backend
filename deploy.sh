@@ -10,6 +10,23 @@ set -e
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$SCRIPT_DIR"
 
+
+# 复制配置文件
+if [ -f "$PARENT_DIR/config.ini" ]; then
+    log_info "Found config.ini in parent directory, copying to project directory..."
+    cp "$PARENT_DIR/config.ini" "$SCRIPT_DIR/config.ini"
+else
+    log_warn "No config.ini found in parent directory: $PARENT_DIR/config.ini"
+    if [ -f "$SCRIPT_DIR/config.template.ini" ]; then
+        cp "$SCRIPT_DIR/config.template.ini" "$SCRIPT_DIR/config.ini"
+        log_warn "Created config.ini from template. Please update it with your settings."
+        exit 1
+    else
+        log_error "Neither config.ini nor config.template.ini found!"
+        exit 1
+    fi
+fi
+
 # 默认端口
 PORT=${1:-8000}
 HOST=${2:-0.0.0.0}
