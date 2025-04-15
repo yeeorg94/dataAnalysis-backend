@@ -8,7 +8,9 @@ from .logger import (
     get_weibo_logger,
     get_test_logger,
     get_system_logger,
-    get_analyze_logger
+    get_analyze_logger,
+    get_tracking_logger,
+    get_db_logger
 )
 from .config import config, get_environment, EnvType
 from .response import Response
@@ -19,6 +21,8 @@ __all__ = [
     "get_tiktok_logger", 
     "get_utils_logger",
     "get_kuaishou_logger",
+    "get_tracking_logger",
+    "get_db_logger",
     "get_weibo_logger",
     "get_test_logger",
     "get_system_logger",

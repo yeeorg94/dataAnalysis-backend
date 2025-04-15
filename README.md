@@ -25,6 +25,45 @@
         └── index.py     # 工具函数
 ```
 
+## 数据库配置
+
+### 配置文件设置
+
+1. 复制配置模板：
+```bash
+cp config.template.ini config.ini
+```
+
+2. 修改数据库配置：
+```ini
+[mysql]
+host = localhost
+port = 3306
+user = your_username
+password = your_password
+database = your_database
+```
+
+### 环境说明
+- 开发环境：配置文件 `config.ini` 位于项目根目录
+- 生产环境：配置文件 `config.ini` 位于项目父目录
+
+### 数据库连接池
+
+项目使用 PyMySQL 和 DBUtils 实现数据库连接池，主要特性：
+- 自动管理连接池大小
+- 支持连接自动回收
+- 支持连接健康检查
+
+使用示例：
+```python
+from src.utils.db import DatabaseConnection
+
+# 使用上下文管理器进行数据库操作
+with DatabaseConnection() as db:
+    result = db.execute_query("SELECT * FROM your_table")
+```
+
 ## 环境配置
 
 项目支持三种运行环境：

@@ -33,6 +33,10 @@ app = FastAPI(
     # 添加路由分组的标签描述
     openapi_tags=[
         {
+            "name": "tracking",
+            "description": "用户行为埋点接口",
+        },
+        {
             "name": "xiaohongshu",
             "description": "小红书数据提取与处理接口",
         },
@@ -100,7 +104,12 @@ async def health_check():
     
 # 注册所有路由模块
 from src.module import register_routes
+from src.routes import db_register_routes
+
+# 注册普通业务路由
 register_routes(app)
+# 注册数据库交互路由
+db_register_routes(app)
 
 # 配置 uvicorn 使用文件日志而不是控制台输出
 def configure_uvicorn_logging():

@@ -95,6 +95,10 @@ def get_test_logger():
     """获取测试模块日志器"""
     return setup_logger('test')
 
+def get_tracking_logger():
+    """获取埋点模块日志器"""
+    return setup_logger('tracking')
+
 def get_utils_logger():
     """获取工具模块日志器"""
     return setup_logger('utils')
@@ -106,6 +110,10 @@ def get_system_logger():
 def get_analyze_logger():
     """获取分析模块日志器"""
     return setup_logger('analyze')
+
+def get_db_logger():
+    """获取数据库模块日志器"""
+    return setup_logger('db')
 
 # 配置根日志器，确保未捕获的日志也被记录
 def configure_root_logger():
