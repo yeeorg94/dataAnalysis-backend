@@ -75,22 +75,6 @@ def get_app_logger():
     """获取应用主日志器"""
     return setup_logger('app')
 
-def get_xiaohongshu_logger():
-    """获取小红书模块日志器"""
-    return setup_logger('xiaohongshu')
-
-def get_tiktok_logger():
-    """获取抖音模块日志器"""
-    return setup_logger('tiktok')
-
-def get_kuaishou_logger():
-    """获取快手模块日志器"""
-    return setup_logger('kuaishou')
-
-def get_weibo_logger():
-    """获取微博模块日志器"""
-    return setup_logger('weibo')
-
 def get_test_logger():
     """获取测试模块日志器"""
     return setup_logger('test')

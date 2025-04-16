@@ -1,15 +1,15 @@
 import json
 from bs4 import BeautifulSoup
 import httpx
-from src.utils import get_tiktok_logger, config
+from src.utils import get_analyze_logger, config
 from src.utils.index import find_url
 from src.utils.response import Response
 
 
-logger = get_tiktok_logger()
+logger = get_analyze_logger()
 
 
-class Tiktok:
+class Douyin:
     def __init__(self, text, type):
         self.text = text
         self.type = type
@@ -36,12 +36,12 @@ class Tiktok:
             self.title = self.soup.title.text if self.soup.title else ""
 
             # 提取页面内容
-            self.extract_tiktok_data()
+            self.extract_douyin_data()
         except Exception as e:
             logger.error(f"获取抖音内容失败: {e}")
             raise e
 
-    def extract_tiktok_data(self):
+    def extract_douyin_data(self):
         """提取抖音内容"""
         try:
             # 提取页面内容
@@ -111,7 +111,7 @@ class Tiktok:
                 "description": self.description,
                 "image_list": self.image_list,
                 "video": self.video,
-                "app_type": "tiktok",
+                "app_type": "douyin",
             }
             return Response.success(result, "获取成功")
         except Exception as e:

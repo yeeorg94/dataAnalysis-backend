@@ -1,12 +1,12 @@
 import json
 from bs4 import BeautifulSoup
 import httpx
-from src.utils import get_kuaishou_logger, config
+from src.utils import get_analyze_logger, config
 from src.utils.index import find_url
 from src.utils.response import Response
 
 
-logger = get_kuaishou_logger()
+logger = get_analyze_logger()
 
 
 class Kuaishou:
@@ -40,7 +40,7 @@ class Kuaishou:
             # 提取页面内容
             self.extract_kuaishou_data()
         except Exception as e:
-            logger.error(f"获取网页基本信息失败: {e}")
+            logger.error(f"获取快手内容失败: {e}")
             raise e
 
     def extract_kuaishou_data(self):

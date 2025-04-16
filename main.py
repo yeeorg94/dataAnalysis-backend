@@ -37,38 +37,13 @@ app = FastAPI(
             "description": "用户行为埋点接口",
         },
         {
-            "name": "xiaohongshu",
-            "description": "小红书数据提取与处理接口",
-        },
-        {
-            "name": "tiktok",
-            "description": "抖音数据提取与处理接口",
-        },
-        {
-            "name": "kuaishou",
-            "description": "快手数据提取与处理接口",
-        },
-        {
-            "name": "test",
-            "description": "测试数据提取与处理接口",
-        },
-        {
-            "name": "weibo",
-            "description": "微博数据提取与处理接口",
-        },
-        {
             "name": "system",
             "description": "系统接口",
         },
         {
             "name": "analyze",
-            "description": "聚合url处理",
+            "description": "解析url",
         },
-        # 其他模块标签可以在这里添加
-        # {
-        #    "name": "douyin",
-        #    "description": "抖音数据提取与处理接口",
-        # },
     ]
 )
 
@@ -103,12 +78,7 @@ async def health_check():
     return {"status": "健康", "环境": current_env}
     
 # 注册所有路由模块
-from src.module import register_routes
 from src.routes import db_register_routes
-
-# 注册普通业务路由
-register_routes(app)
-# 注册数据库交互路由
 db_register_routes(app)
 
 # 配置 uvicorn 使用文件日志而不是控制台输出

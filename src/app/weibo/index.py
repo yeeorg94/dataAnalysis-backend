@@ -6,7 +6,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from src.utils import config, get_weibo_logger
+from src.utils import config, get_analyze_logger
 from seleniumwire.request import (
     Request as SeleniumRequest,
     Response as SeleniumResponse,
@@ -15,7 +15,7 @@ from src.utils.response import Response
 import gzip
 import json
 
-logger = get_weibo_logger()
+logger = get_analyze_logger()
 
 
 class Weibo:
