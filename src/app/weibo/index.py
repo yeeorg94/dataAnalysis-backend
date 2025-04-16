@@ -17,6 +17,7 @@ import json
 
 logger = get_weibo_logger()
 
+
 class Weibo:
     def __init__(self, url, type):
         self.url = url
@@ -32,7 +33,7 @@ class Weibo:
         self.app_type = "weibo"
         # self._init_driver()
         self._init_request()
-        
+
     # request方案
     def _init_request(self):
         try:
@@ -47,13 +48,13 @@ class Weibo:
             )
             self.html = response.text
             self.soup = BeautifulSoup(self.html, "html.parser")
-            
+
             # 提取页面内容
             self.extract_weibo_data()
         except Exception as e:
             logger.error(f"获取微博内容失败: {e}")
             raise e
-    
+
     def extract_weibo_data(self):
         scripts = self.soup.find_all("script")
         for script in scripts:
@@ -69,7 +70,6 @@ class Weibo:
                 ctx = execjs.compile(js_code)
                 # 双引号的数据需要转换为单引号
                 render_data = ctx.call("get_render_data")
-                logger.info(f'render_text: {json.dumps(render_data)}')
                 self.body = render_data.get("status", {})
                 self.get_image_list()
                 self.get_live_list()
@@ -77,7 +77,7 @@ class Weibo:
                 self.get_title()
                 self.get_description()
                 break
-     
+
     # 无头浏览器方案
     def _init_driver(self):
         chrome_options = Options()
@@ -117,56 +117,57 @@ class Weibo:
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "woo-box-flex"))
         )
-        
-        logger.info('页面加载完成')
+
+        logger.info("页面加载完成")
 
     def on_request(self, request: SeleniumRequest):
         if "statuses/show" in request.url:
             import time
+
             time.sleep(2)
 
     def on_response(self, request: SeleniumRequest, response: SeleniumResponse):
         if "statuses/show" in request.url:
             body_str = gzip.decompress(response.body)
-            logger.info(body_str,'body_str')
+            logger.info(body_str, "body_str")
             body = json.loads(body_str)
             self.body = body
             self.get_image_list()
             self.get_title()
             self.get_description()
             self.driver.quit()
-            
+
     def get_image_list(self):
         pic_ids = self.body.get("pic_ids", [])
         for pic_id in pic_ids:
             url = f"https://wx1.sinaimg.cn/osj1080/{pic_id}.jpg"
             self.image_list.append(url)
         return self.image_list
-    
+
     def get_title(self):
         title = self.body.get("text", "")
         self.title = title
         return self.title
-    
+
     def get_live_list(self):
         pics = self.body.get("pics", "")
         for pic in pics:
             if pic.get("type") == "livephoto":
                 self.live_list.append(pic.get("videoSrc"))
         return self.live_list
-    
+
     def get_video(self):
-        page_info = self.body.get("page_info", "")
+        page_info = self.body.get("page_info", {})
         page_info_type = page_info.get("type", "")
         if page_info_type == "video":
             self.video = page_info.get("media_info", {}).get("stream_url", "")
         return self.video
-    
+
     def get_description(self):
         description = self.body.get("text", "")
         self.description = description
         return self.description
-    
+
     def to_dict(self):
         """将对象转换为字典，用于 API 返回"""
         try:
