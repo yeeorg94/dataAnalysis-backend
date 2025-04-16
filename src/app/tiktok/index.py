@@ -94,7 +94,10 @@ class Tiktok:
         try:
             video_data = get_video_data.get("play_addr", {})
             video_url = video_data.get("url_list", [])[0] if video_data else ""
-            self.video = video_url.replace("playwm", "play")
+            if 'mp3' in video_url:
+                self.video = ""
+            else:
+                self.video = video_url.replace("playwm", "play")
         except Exception as e:
             raise e
 
