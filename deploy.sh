@@ -55,9 +55,15 @@ python --version
 echo "当前目录: $(pwd)"
 
 # 如果存在虚拟环境，则激活
-if [ -d "venv" ]; then
+if [ -d ".venv" ]; then
     echo "激活虚拟环境..."
-    source venv/bin/activate
+    source .venv/bin/activate
+fi
+# 不存在的话创建一个
+if [ ! -d ".venv" ]; then
+    echo "创建虚拟环境..."
+    python -m venv .venv
+    source .venv/bin/activate
 fi
 
 # 拉取最新代码
