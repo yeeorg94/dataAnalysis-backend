@@ -9,6 +9,7 @@ logger = get_db_logger()
 
 class DatabasePool:
     _instance = None
+    _config_valid = False
     
     def __new__(cls):
         if cls._instance is None:
@@ -21,9 +22,17 @@ class DatabasePool:
             return
             
         self._initialized = True
-        self.config = self._load_config()
-        self.pool = self._create_pool()
-        
+        try:
+            self.config = self._load_config()
+            self.pool = self._create_pool()
+            DatabasePool._config_valid = True
+        except FileNotFoundError:
+            logger.warning("No database configuration file found. Database features will be disabled.")
+            DatabasePool._config_valid = False
+        except Exception as e:
+            logger.error(f"Error initializing database pool: {e}")
+            DatabasePool._config_valid = False
+            
     def _load_config(self) -> dict:
         """加载数据库配置"""
         config = configparser.ConfigParser()
@@ -66,7 +75,14 @@ class DatabasePool:
             
     def get_connection(self):
         """获取数据库连接"""
+        if not DatabasePool._config_valid:
+            raise RuntimeError("Database is not configured properly")
         return self.pool.connection()
+
+    @classmethod
+    def is_configured(cls) -> bool:
+        """检查数据库是否已正确配置"""
+        return cls._config_valid
 
 class DatabaseConnection:
     def __init__(self):
@@ -76,6 +92,8 @@ class DatabaseConnection:
         
     def __enter__(self):
         """上下文管理器入口"""
+        if not DatabasePool.is_configured():
+            raise RuntimeError("Database is not configured properly")
         self.connection = self.pool.get_connection()
         self.cursor = self.connection.cursor()
         return self
@@ -94,6 +112,8 @@ class DatabaseConnection:
         :param params: 查询参数
         :return: 查询结果
         """
+        if not DatabasePool.is_configured():
+            raise RuntimeError("Database is not configured properly")
         try:
             with self as db:
                 db.cursor.execute(query, params)

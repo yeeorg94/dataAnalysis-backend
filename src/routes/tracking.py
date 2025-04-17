@@ -31,8 +31,6 @@ async def track_event(event: TrackingEvent, request: Request):
     event.ip_address = request.client.host
     event.referrer = request.headers.get("referer")
     
-    logger.info(f"ip地址: {request.client.host}")
-    
     success = tracking_service.track_event(event)
     if success:
         return Response.success(None, "埋点记录成功")
