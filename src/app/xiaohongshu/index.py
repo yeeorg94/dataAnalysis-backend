@@ -40,7 +40,7 @@ class Xiaohongshu:
                 self.url, follow_redirects=True, headers=headers, timeout=10.0
             )
             self.final_url = response.url
-            if "404" in find_url(self.final_url):
+            if "404" in str(self.final_url):
                 # 抛出异常
                 raise ValueError(f"小红书链接已失效: {self.final_url}")
             self.html = response.text
