@@ -75,7 +75,7 @@ class Xiaohongshu:
                         self.get_video()
                         self.get_meta_description()
                     except json.JSONDecodeError as e:
-                        logger.error(f"JSON 格式错误: {str(e)}")
+                        raise e
                     break
                 except Exception as e:
                     raise e
@@ -105,7 +105,7 @@ class Xiaohongshu:
                     self.live_list.append(live_url)
             self.image_list = Image(token_list, self.type).to_dict()
         except Exception as e:
-            raise ValueError("获取图片列表失败")
+            raise e
 
     def get_video(self):
         """获取视频"""
@@ -120,7 +120,7 @@ class Xiaohongshu:
             )
             self.video = masterUrl
         except Exception as e:
-            raise ValueError("获取视频失败")
+            raise e
 
     def to_dict(self):
         """将对象转换为字典，用于 API 返回"""
@@ -137,4 +137,4 @@ class Xiaohongshu:
             }
             return Response.success(result, "获取成功")
         except Exception as e:
-            raise ValueError(f"转换为字典时出错: {str(e)}")
+            raise ValueError(f"小红书转换为字典时出错: {str(e)}")

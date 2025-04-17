@@ -115,5 +115,5 @@ class Douyin:
             }
             return Response.success(result, "获取成功")
         except Exception as e:
-            logger.error(f"转换为字典时出错: {str(e)}", exc_info=True)
+            logger.error(f"抖音转换为字典时出错: {str(e)}", exc_info=True)
             return Response.error("获取失败")

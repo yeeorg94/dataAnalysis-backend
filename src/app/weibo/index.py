@@ -118,8 +118,6 @@ class Weibo:
             EC.presence_of_element_located((By.CLASS_NAME, "woo-box-flex"))
         )
 
-        logger.info("页面加载完成")
-
     def on_request(self, request: SeleniumRequest):
         if "statuses/show" in request.url:
             import time
@@ -183,5 +181,5 @@ class Weibo:
             }
             return Response.success(result, "获取成功")
         except Exception as e:
-            logger.error(f"转换为字典时出错: {str(e)}", exc_info=True)
+            logger.error(f"微博转换为字典时出错: {str(e)}", exc_info=True)
             return Response.error("获取失败")

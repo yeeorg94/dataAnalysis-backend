@@ -54,7 +54,6 @@ class Kuaishou:
             for script in scripts:
                 if script.string and "window.INIT_STATE" in script.string:
                     data_text = script.string.split("window.INIT_STATE = ")[1]
-                    logger.info(f"提取到的数据: {data_text}")
                     # 提取出来的数据转成dict
                     data_dict = json.loads(data_text)
                     self.data_dict = data_dict
@@ -81,7 +80,6 @@ class Kuaishou:
             self.description = obj2_data.get("caption", "")
 
         except Exception as e:
-            logger.error(f"获取dict数据失败: {e}")
             raise e
 
     def get_video_data(self, obj3_data):
@@ -94,7 +92,6 @@ class Kuaishou:
             backupUrl = representation_item.get("backupUrl", [])
             self.video = backupUrl[0]
         except Exception as e:
-            logger.error(f"获取视频数据失败: {e}")
             raise e
 
     def get_image_data(self, obj4_data):
@@ -107,7 +104,6 @@ class Kuaishou:
                     if item:
                         self.image_list.append(self.image_prefix + item)
         except Exception as e:
-            logger.error(f"获取图片数据失败: {e}")
             raise e
 
     def to_dict(self):
@@ -124,5 +120,5 @@ class Kuaishou:
             }
             return Response.success(result, "获取成功")
         except Exception as e:
-            logger.error(f"转换为字典时出错: {str(e)}", exc_info=True)
+            logger.error(f"快手转换为字典时出错: {str(e)}", exc_info=True)
             return Response.error("获取失败")
