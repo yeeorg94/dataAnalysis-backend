@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 import requests
 from src.app.test.index import Test
-from src.utils import get_system_logger
+from src.utils import get_system_logger, config
 import httpx
 from fastapi.responses import StreamingResponse
 import io
@@ -85,6 +85,32 @@ async def process_image_proxy(url: str):
             'Referer': 'https://weibo.com',  # 设置合法的Referer
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
         }
+        response = requests.get(url, headers=headers, stream=True)
+        return Response(response.content)
+    
+    except Exception as e:
+        logger.error(f"处理图片代理请求出错: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/forward")
+async def process_forward(url: str):
+    """
+    转发资源链接
+    
+    参数:
+    - url: 资源链接
+    """
+    try:
+        # 判断是不是微博 是的话设置referer为weibo.com 否则设置referer为空
+        if any(keyword in url for keyword in config.APP_TYPE_KEYWORD["weibo"]):
+            headers = {
+                'Referer': 'https://weibo.com',  # 设置合法的Referer
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+            }
+        else:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+            }
         response = requests.get(url, headers=headers, stream=True)
         return Response(response.content)
     
