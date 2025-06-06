@@ -17,3 +17,5 @@ onnxruntime>=1.15.0
 numpy<=1.26.4
 mtcnn-runtime
 tqdm
+Pillow
+gradio
