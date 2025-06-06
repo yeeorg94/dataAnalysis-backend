@@ -44,6 +44,10 @@ app = FastAPI(
             "name": "analyze",
             "description": "解析url",
         },
+        {
+            "name": "idphoto",
+            "description": "证件照处理接口",
+        },
     ]
 )
 
