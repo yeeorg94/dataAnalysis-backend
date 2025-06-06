@@ -1,15 +1,17 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Query
 from typing import Optional
 from pydantic import BaseModel
 import requests
 from src.app.test.index import Test
-from src.utils import get_system_logger, config
+from src.utils import get_global_logger, config
 import httpx
 from fastapi.responses import StreamingResponse
 import io
+import ipaddress
+from urllib.parse import urlparse
 
 # 获取应用日志器
-logger = get_system_logger()
+logger = get_global_logger()
 
 # 创建路由器
 router = APIRouter(
@@ -86,34 +88,57 @@ async def process_image_proxy(url: str):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
         }
         response = requests.get(url, headers=headers, stream=True)
-        return Response(response.content)
+        # 获取原始响应的内容类型
+        content_type = response.headers.get('Content-Type')
+        
+        # 构建响应时传递原始内容类型
+        return Response(
+            content=response.content,
+            media_type=content_type
+        )
     
     except Exception as e:
         logger.error(f"处理图片代理请求出错: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/forward")
-async def process_forward(url: str):
-    """
-    转发资源链接
-    
-    参数:
-    - url: 资源链接
-    """
+@router.get("/proxy")
+def proxy_download(url: str = Query(..., description="目标资源 URL")):
     try:
-        # 判断是不是微博 是的话设置referer为weibo.com 否则设置referer为空
-        if any(keyword in url for keyword in config.APP_TYPE_KEYWORD["weibo"]):
-            headers = {
-                'Referer': 'https://weibo.com',  # 设置合法的Referer
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-            }
-        else:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-            }
-        response = requests.get(url, headers=headers, stream=True)
-        return Response(response.content)
-    
+        # 设置更符合抖音要求的请求头
+        headers = {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "zh-TW,zh;q=0.9,ja;q=0.8,ko;q=0.7,zh-CN;q=0.6,en-GB;q=0.5,en;q=0.4,en-US;q=0.3",
+            "Host": "sns-video-qc.xhscdn.com",
+            "Proxy-Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Referer": "https://www.duoleta.com/",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0"
+        }
+
+        logger.info(f"请求URL: {url}")
+        logger.info(f"请求头: {headers}")
+
+        response = requests.get(url, headers=headers, timeout=10, allow_redirects=True)
+
+        # 记录响应详情
+        logger.info(f"响应状态码: {response.status_code}")
+        logger.info(f"响应头: {response.headers}")
+        logger.info(f"响应内容前100字节: {response.text[:100]}")
+
+        if response.status_code != 200:
+            logger.error(f"请求失败: {response.text}")
+            raise HTTPException(status_code=response.status_code, detail=f"Failed to fetch resource: {response.text}")
+
+        content_type = response.headers.get("Content-Type", "application/octet-stream")
+
+        return StreamingResponse(
+            content=response.iter_content(chunk_size=1024),
+            media_type=content_type,
+            headers={"Content-Type": content_type}
+        )
+
     except Exception as e:
-        logger.error(f"处理图片代理请求出错: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = f"Request failed: {str(e)}"
+        logger.error(f"请求失败: {error_msg}")
+        raise HTTPException(status_code=500, detail=error_msg)

@@ -87,9 +87,9 @@ def get_utils_logger():
     """获取工具模块日志器"""
     return setup_logger('utils')
 
-def get_system_logger():
+def get_global_logger():
     """获取系统模块日志器"""
-    return setup_logger('system')
+    return setup_logger('global')
 
 def get_analyze_logger():
     """获取分析模块日志器"""

@@ -3,7 +3,7 @@ from .logger import (
     get_app_logger,
     get_utils_logger,
     get_test_logger,
-    get_system_logger,
+    get_global_logger,
     get_analyze_logger,
     get_tracking_logger,
     get_db_logger
@@ -17,7 +17,7 @@ __all__ = [
     "get_tracking_logger",
     "get_db_logger",
     "get_test_logger",
-    "get_system_logger",
+    "get_global_logger",
     "get_analyze_logger",
     "config",
     "get_environment",
