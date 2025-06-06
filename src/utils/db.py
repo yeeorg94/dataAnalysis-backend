@@ -24,30 +24,38 @@ class DatabasePool:
         self._initialized = True
         try:
             self.config = self._load_config()
-            self.pool = self._create_pool()
-            DatabasePool._config_valid = True
-        except FileNotFoundError:
-            logger.warning("No database configuration file found. Database features will be disabled.")
-            DatabasePool._config_valid = False
+            # 只有在成功加载配置文件时才尝试创建连接池
+            if self.config is not None:
+                self.pool = self._create_pool()
+                DatabasePool._config_valid = True
+            else:
+                logger.warning("No database configuration file found. Database features will be disabled.")
+                DatabasePool._config_valid = False
         except Exception as e:
             logger.error(f"Error initializing database pool: {e}")
             DatabasePool._config_valid = False
             
-    def _load_config(self) -> dict:
-        """加载数据库配置"""
+    def _load_config(self) -> Optional[dict]:
+        """加载数据库配置，如果配置文件不存在则返回None"""
         config = configparser.ConfigParser()
         
         if os.path.exists('config.ini'):
             config.read('config.ini')
+            return config['mysql']
         elif os.path.exists('config.template.ini'):
             config.read('config.template.ini')
+            return config['mysql']
         else:
-            raise FileNotFoundError("No configuration file found")
-            
-        return config['mysql']
+            # 不再抛出异常，而是返回None
+            logger.warning("No configuration file found (config.ini or config.template.ini)")
+            return None
         
-    def _create_pool(self) -> PooledDB:
+    def _create_pool(self) -> Optional[PooledDB]:
         """创建数据库连接池"""
+        # 如果配置为None，则不创建连接池
+        if self.config is None:
+            return None
+            
         try:
             pool = PooledDB(
                 creator=pymysql,        # 使用链接数据库的模块
@@ -71,7 +79,8 @@ class DatabasePool:
             return pool
         except Exception as e:
             logger.error(f"Error creating database pool: {e}")
-            raise
+            DatabasePool._config_valid = False
+            return None
             
     def get_connection(self):
         """获取数据库连接"""
