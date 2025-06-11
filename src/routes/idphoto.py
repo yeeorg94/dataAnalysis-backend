@@ -1,4 +1,7 @@
-from fastapi import APIRouter, UploadFile, Form, File
+from fastapi import APIRouter, UploadFile, Form, File, Body
+from fastapi.params import Body
+from pydantic import BaseModel
+from typing import Optional
 from hivision import IDCreator
 from hivision.error import FaceError
 from hivision.creator.layout_calculator import (
@@ -31,61 +34,103 @@ router = APIRouter(
 
 creator = IDCreator()
 
+# 定义请求模型
+class IdPhotoCreateRequest(BaseModel):
+    input_image_base64: str
+    height: int = 413
+    width: int = 295
+    human_matting_model: str = "modnet_photographic_portrait_matting"
+    face_detect_model: str = "mtcnn"
+    hd: bool = True
+    dpi: int = 300
+    face_align: bool = False
+    head_measure_ratio: float = 0.2
+    head_height_ratio: float = 0.45
+    top_distance_max: float = 0.12
+    top_distance_min: float = 0.10
+    brightness_strength: float = 0
+    contrast_strength: float = 0
+    sharpen_strength: float = 0
+    saturation_strength: float = 0
+
+class HumanMattingRequest(BaseModel):
+    input_image_base64: str
+    human_matting_model: str = "hivision_modnet"
+    dpi: int = 300
+
+class AddBackgroundRequest(BaseModel):
+    input_image_base64: str
+    color: str = "000000"
+    kb: Optional[int] = None
+    dpi: int = 300
+    render: int = 0
+
+class LayoutRequest(BaseModel):
+    input_image_base64: str
+    height: int = 413
+    width: int = 295
+    kb: Optional[int] = None
+    dpi: int = 300
+
+class WatermarkRequest(BaseModel):
+    input_image_base64: str
+    text: str = "Hello"
+    size: int = 20
+    opacity: float = 0.5
+    angle: int = 30
+    color: str = "#000000"
+    space: int = 25
+    kb: Optional[int] = None
+    dpi: int = 300
+
+class ResizeRequest(BaseModel):
+    input_image_base64: str
+    dpi: int = 300
+    kb: int = 50
+
+class CropRequest(BaseModel):
+    input_image_base64: str
+    height: int = 413
+    width: int = 295
+    face_detect_model: str = "mtcnn"
+    hd: bool = True
+    dpi: int = 300
+    head_measure_ratio: float = 0.2
+    head_height_ratio: float = 0.45
+    top_distance_max: float = 0.12
+    top_distance_min: float = 0.10
+
 # 证件照智能制作接口
 @router.post("/create")
-async def idphoto_inference(
-    input_image: UploadFile = File(None),
-    input_image_base64: str = Form(None),
-    height: int = Form(413),
-    width: int = Form(295),
-    human_matting_model: str = Form("modnet_photographic_portrait_matting"),
-    face_detect_model: str = Form("mtcnn"),
-    hd: bool = Form(True),
-    dpi: int = Form(300),
-    face_align: bool = Form(False),
-    head_measure_ratio: float = Form(0.2),
-    head_height_ratio: float = Form(0.45),
-    top_distance_max: float = Form(0.12),
-    top_distance_min: float = Form(0.10),
-    brightness_strength: float = Form(0),
-    contrast_strength: float = Form(0),
-    sharpen_strength: float = Form(0),
-    saturation_strength: float = Form(0),
-):  
+async def idphoto_inference(request: IdPhotoCreateRequest):  
     logger.info("证件照制作请求")
-    # 如果传入了base64，则直接使用base64解码
-    if input_image_base64:
-        img = base64_2_numpy(input_image_base64)
-    # 否则使用上传的图片
-    else:
-        image_bytes = await input_image.read()
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    # 使用base64解码
+    img = base64_2_numpy(request.input_image_base64)
 
     # ------------------- 选择抠图与人脸检测模型 -------------------
-    choose_handler(creator, human_matting_model, face_detect_model)
+    choose_handler(creator, request.human_matting_model, request.face_detect_model)
 
     # 将字符串转为元组
-    size = (int(height), int(width))
+    size = (int(request.height), int(request.width))
     try:
         result = creator(
             img,
             size=size,
-            head_measure_ratio=head_measure_ratio,
-            head_height_ratio=head_height_ratio,
-            head_top_range=(top_distance_max, top_distance_min),
-            face_alignment=face_align,
-            brightness_strength=brightness_strength,
-            contrast_strength=contrast_strength,
-            sharpen_strength=sharpen_strength,
-            saturation_strength=saturation_strength,
+            head_measure_ratio=request.head_measure_ratio,
+            head_height_ratio=request.head_height_ratio,
+            head_top_range=(request.top_distance_max, request.top_distance_min),
+            face_alignment=request.face_align,
+            brightness_strength=request.brightness_strength,
+            contrast_strength=request.contrast_strength,
+            sharpen_strength=request.sharpen_strength,
+            saturation_strength=request.saturation_strength,
         )
     except FaceError:
         logger.error("未检测到人脸或检测到多个人脸")
         result_message = {"status": False, "message": "未检测到人脸或检测到多个人脸"}
     # 如果检测到人脸数量等于1, 则返回标准证和高清照结果（png 4通道图像）
     else:
-        result_image_standard_bytes = save_image_dpi_to_bytes(cv2.cvtColor(result.standard, cv2.COLOR_RGBA2BGRA), None, dpi)
+        result_image_standard_bytes = save_image_dpi_to_bytes(cv2.cvtColor(result.standard, cv2.COLOR_RGBA2BGRA), None, request.dpi)
         
         result_message = {
             "status": True,
@@ -93,8 +138,8 @@ async def idphoto_inference(
         }
 
         # 如果hd为True, 则增加高清照结果（png 4通道图像）
-        if hd:
-            result_image_hd_bytes = save_image_dpi_to_bytes(cv2.cvtColor(result.hd, cv2.COLOR_RGBA2BGRA), None, dpi)
+        if request.hd:
+            result_image_hd_bytes = save_image_dpi_to_bytes(cv2.cvtColor(result.hd, cv2.COLOR_RGBA2BGRA), None, request.dpi)
             result_message["image_base64_hd"] = bytes_2_base64(result_image_hd_bytes)
 
     return result_message
@@ -102,22 +147,12 @@ async def idphoto_inference(
 
 # 人像抠图接口
 @router.post("/human_matting")
-async def human_matting_inference(
-    input_image: UploadFile = File(None),
-    input_image_base64: str = Form(None),
-    human_matting_model: str = Form("hivision_modnet"),
-    dpi: int = Form(300),
-):
+async def human_matting_inference(request: HumanMattingRequest):
     logger.info("人像抠图请求")
-    if input_image_base64:
-        img = base64_2_numpy(input_image_base64)
-    else:
-        image_bytes = await input_image.read()
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    img = base64_2_numpy(request.input_image_base64)
 
     # ------------------- 选择抠图与人脸检测模型 -------------------
-    choose_handler(creator, human_matting_model, None)
+    choose_handler(creator, request.human_matting_model, None)
 
     try:
         result = creator(
@@ -128,7 +163,7 @@ async def human_matting_inference(
         logger.error("人像抠图失败")
         result_message = {"status": False, "message": "人像抠图失败"}
     else:
-        result_image_standard_bytes = save_image_dpi_to_bytes(cv2.cvtColor(result.standard, cv2.COLOR_RGBA2BGRA), None, dpi)
+        result_image_standard_bytes = save_image_dpi_to_bytes(cv2.cvtColor(result.standard, cv2.COLOR_RGBA2BGRA), None, request.dpi)
         result_message = {
             "status": True,
             "image_base64": bytes_2_base64(result_image_standard_bytes),
@@ -138,38 +173,26 @@ async def human_matting_inference(
 
 # 透明图像添加纯色背景接口
 @router.post("/add_background")
-async def photo_add_background(
-    input_image: UploadFile = File(None),
-    input_image_base64: str = Form(None),
-    color: str = Form("000000"),
-    kb: int = Form(None),
-    dpi: int = Form(300),
-    render: int = Form(0),
-):
+async def photo_add_background(request: AddBackgroundRequest):
     logger.info("添加背景请求")
     render_choice = ["pure_color", "updown_gradient", "center_gradient"]
 
-    if input_image_base64:
-        img = base64_2_numpy(input_image_base64)
-    else:
-        image_bytes = await input_image.read()
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
+    img = base64_2_numpy(request.input_image_base64)
 
-    color = hex_to_rgb(color)
+    color = hex_to_rgb(request.color)
     color = (color[2], color[1], color[0])
 
     result_image = add_background(
         img,
         bgr=color,
-        mode=render_choice[render],
+        mode=render_choice[request.render],
     ).astype(np.uint8)
 
     result_image = cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR)
-    if kb:
-        result_image_bytes = resize_image_to_kb(result_image, None, int(kb), dpi=dpi)
+    if request.kb:
+        result_image_bytes = resize_image_to_kb(result_image, None, int(request.kb), dpi=request.dpi)
     else:
-        result_image_bytes = save_image_dpi_to_bytes(result_image, None, dpi=dpi)
+        result_image_bytes = save_image_dpi_to_bytes(result_image, None, dpi=request.dpi)
 
     result_messgae = {
         "status": True,
@@ -181,23 +204,11 @@ async def photo_add_background(
 
 # 六寸排版照生成接口
 @router.post("/layout")
-async def generate_layout_photos(
-    input_image: UploadFile = File(None),
-    input_image_base64: str = Form(None),
-    height: int = Form(413),
-    width: int = Form(295),
-    kb: int = Form(None),
-    dpi: int = Form(300),
-):
+async def generate_layout_photos(request: LayoutRequest):
     logger.info("六寸排版请求")
-    if input_image_base64:
-        img = base64_2_numpy(input_image_base64)
-    else:
-        image_bytes = await input_image.read()
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    img = base64_2_numpy(request.input_image_base64)
 
-    size = (int(height), int(width))
+    size = (int(request.height), int(request.width))
 
     typography_arr, typography_rotate = generate_layout_array(
         input_height=size[0], input_width=size[1]
@@ -208,12 +219,12 @@ async def generate_layout_photos(
     ).astype(np.uint8)
 
     result_layout_image = cv2.cvtColor(result_layout_image, cv2.COLOR_RGB2BGR)
-    if kb:
+    if request.kb:
         result_layout_image_bytes = resize_image_to_kb(
-            result_layout_image, None, int(kb), dpi=dpi
+            result_layout_image, None, int(request.kb), dpi=request.dpi
         )
     else:
-        result_layout_image_bytes = save_image_dpi_to_bytes(result_layout_image, None, dpi=dpi)
+        result_layout_image_bytes = save_image_dpi_to_bytes(result_layout_image, None, dpi=request.dpi)
         
     result_layout_image_base64 = bytes_2_base64(result_layout_image_bytes)
 
@@ -227,41 +238,25 @@ async def generate_layout_photos(
 
 # 透明图像添加水印接口
 @router.post("/watermark")
-async def watermark(
-    input_image: UploadFile = File(None),
-    input_image_base64: str = Form(None),
-    text: str = Form("Hello"),
-    size: int = Form(20),
-    opacity: float = Form(0.5),
-    angle: int = Form(30),
-    color: str = Form("#000000"),
-    space: int = Form(25),
-    kb: int = Form(None),
-    dpi: int = Form(300),
-):
+async def watermark(request: WatermarkRequest):
     logger.info("添加水印请求")
-    if input_image_base64:
-        img = base64_2_numpy(input_image_base64)
-    else:
-        image_bytes = await input_image.read()
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
+    img = base64_2_numpy(request.input_image_base64)
 
-    color_rgb = hex_to_rgb(color.lstrip("#"))
+    color_rgb = hex_to_rgb(request.color.lstrip("#"))
     img_with_watermark = add_watermark(
         img,
-        text=text,
-        font_size=size,
-        opacity=opacity,
-        angle_in_degree=angle,
+        text=request.text,
+        font_size=request.size,
+        opacity=request.opacity,
+        angle_in_degree=request.angle,
         font_color=color_rgb,
-        space=space,
+        space=request.space,
     )
 
-    if kb:
-        result_image_bytes = resize_image_to_kb(img_with_watermark, None, int(kb), dpi=dpi)
+    if request.kb:
+        result_image_bytes = resize_image_to_kb(img_with_watermark, None, int(request.kb), dpi=request.dpi)
     else:
-        result_image_bytes = save_image_dpi_to_bytes(img_with_watermark, None, dpi=dpi)
+        result_image_bytes = save_image_dpi_to_bytes(img_with_watermark, None, dpi=request.dpi)
 
     result_messgae = {
         "status": True,
@@ -273,21 +268,11 @@ async def watermark(
 
 # 调整图片大小接口
 @router.post("/resize")
-async def set_kb(
-    input_image: UploadFile = File(None),
-    input_image_base64: str = Form(None),
-    dpi: int = Form(300),
-    kb: int = Form(50),
-):
+async def set_kb(request: ResizeRequest):
     logger.info("调整图片大小请求")
-    if input_image_base64:
-        img = base64_2_numpy(input_image_base64)
-    else:
-        image_bytes = await input_image.read()
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
+    img = base64_2_numpy(request.input_image_base64)
 
-    result_image_bytes = resize_image_to_kb(img, None, int(kb), dpi=dpi)
+    result_image_bytes = resize_image_to_kb(img, None, int(request.kb), dpi=request.dpi)
     result_messgae = {
         "status": True,
         "image_base64": bytes_2_base64(result_image_bytes),
@@ -298,38 +283,21 @@ async def set_kb(
 
 # 证件照裁剪接口
 @router.post("/crop")
-async def idphoto_crop_inference(
-    input_image: UploadFile = File(None),
-    input_image_base64: str = Form(None),
-    height: int = Form(413),
-    width: int = Form(295),
-    face_detect_model: str = Form("mtcnn"),
-    hd: bool = Form(True),
-    dpi: int = Form(300),
-    head_measure_ratio: float = Form(0.2),
-    head_height_ratio: float = Form(0.45),
-    top_distance_max: float = Form(0.12),
-    top_distance_min: float = Form(0.10),
-):
+async def idphoto_crop_inference(request: CropRequest):
     logger.info("证件照裁剪请求")
-    if input_image_base64:
-        img = base64_2_numpy(input_image_base64)
-    else:
-        image_bytes = await input_image.read()
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
+    img = base64_2_numpy(request.input_image_base64)
 
     # ------------------- 选择抠图与人脸检测模型 -------------------
-    choose_handler(creator, None, face_detect_model)
+    choose_handler(creator, None, request.face_detect_model)
     # 将字符串转为元组
-    size = (int(height), int(width))
+    size = (int(request.height), int(request.width))
     try:
         result = creator(
             img,
             size=size,
-            head_measure_ratio=head_measure_ratio,
-            head_height_ratio=head_height_ratio,
-            head_top_range=(top_distance_max, top_distance_min),
+            head_measure_ratio=request.head_measure_ratio,
+            head_height_ratio=request.head_height_ratio,
+            head_top_range=(request.top_distance_max, request.top_distance_min),
             crop_only=True,
         )
     except FaceError:
@@ -337,15 +305,15 @@ async def idphoto_crop_inference(
         result_message = {"status": False, "message": "未检测到人脸或检测到多个人脸"}
 
     else:
-        result_image_standard_bytes = save_image_dpi_to_bytes(result.standard, None, dpi)
+        result_image_standard_bytes = save_image_dpi_to_bytes(result.standard, None, request.dpi)
         result_message = {
             "status": True,
             "image_base64_standard": bytes_2_base64(result_image_standard_bytes),
         }
 
         # 如果hd为True, 则增加高清照结果（png 4通道图像）
-        if hd:
-            result_image_hd_bytes = save_image_dpi_to_bytes(result.hd, None, dpi)
+        if request.hd:
+            result_image_hd_bytes = save_image_dpi_to_bytes(result.hd, None, request.dpi)
             result_message["image_base64_hd"] = bytes_2_base64(result_image_hd_bytes)
 
     return result_message 
