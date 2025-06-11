@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, Form, File, Body
 from fastapi.params import Body
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 from hivision import IDCreator
 from hivision.error import FaceError
 from hivision.creator.layout_calculator import (
@@ -100,6 +100,27 @@ class CropRequest(BaseModel):
     top_distance_max: float = 0.12
     top_distance_min: float = 0.10
 
+# 统一响应结构函数
+def success_response(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    创建统一的成功响应结构
+    """
+    return {
+        "code": 200,
+        "data": data,
+        "msg": "success"
+    }
+
+def error_response(message: str, code: int = 400) -> Dict[str, Any]:
+    """
+    创建统一的错误响应结构
+    """
+    return {
+        "code": code,
+        "data": {},
+        "msg": message
+    }
+
 # 证件照智能制作接口
 @router.post("/create")
 async def idphoto_inference(request: IdPhotoCreateRequest):  
@@ -127,12 +148,12 @@ async def idphoto_inference(request: IdPhotoCreateRequest):
         )
     except FaceError:
         logger.error("未检测到人脸或检测到多个人脸")
-        result_message = {"status": False, "message": "未检测到人脸或检测到多个人脸"}
+        return error_response("未检测到人脸或检测到多个人脸")
     # 如果检测到人脸数量等于1, 则返回标准证和高清照结果（png 4通道图像）
     else:
         result_image_standard_bytes = save_image_dpi_to_bytes(cv2.cvtColor(result.standard, cv2.COLOR_RGBA2BGRA), None, request.dpi)
         
-        result_message = {
+        result_data = {
             "status": True,
             "image_base64_standard": bytes_2_base64(result_image_standard_bytes),
         }
@@ -140,9 +161,9 @@ async def idphoto_inference(request: IdPhotoCreateRequest):
         # 如果hd为True, 则增加高清照结果（png 4通道图像）
         if request.hd:
             result_image_hd_bytes = save_image_dpi_to_bytes(cv2.cvtColor(result.hd, cv2.COLOR_RGBA2BGRA), None, request.dpi)
-            result_message["image_base64_hd"] = bytes_2_base64(result_image_hd_bytes)
+            result_data["image_base64_hd"] = bytes_2_base64(result_image_hd_bytes)
 
-    return result_message
+    return success_response(result_data)
 
 
 # 人像抠图接口
@@ -161,14 +182,14 @@ async def human_matting_inference(request: HumanMattingRequest):
         )
     except FaceError:
         logger.error("人像抠图失败")
-        result_message = {"status": False, "message": "人像抠图失败"}
+        return error_response("人像抠图失败")
     else:
         result_image_standard_bytes = save_image_dpi_to_bytes(cv2.cvtColor(result.standard, cv2.COLOR_RGBA2BGRA), None, request.dpi)
-        result_message = {
+        result_data = {
             "status": True,
             "image_base64": bytes_2_base64(result_image_standard_bytes),
         }
-    return result_message
+    return success_response(result_data)
 
 
 # 透明图像添加纯色背景接口
@@ -194,12 +215,12 @@ async def photo_add_background(request: AddBackgroundRequest):
     else:
         result_image_bytes = save_image_dpi_to_bytes(result_image, None, dpi=request.dpi)
 
-    result_messgae = {
+    result_data = {
         "status": True,
         "image_base64": bytes_2_base64(result_image_bytes),
     }
 
-    return result_messgae
+    return success_response(result_data)
 
 
 # 六寸排版照生成接口
@@ -228,12 +249,12 @@ async def generate_layout_photos(request: LayoutRequest):
         
     result_layout_image_base64 = bytes_2_base64(result_layout_image_bytes)
 
-    result_messgae = {
+    result_data = {
         "status": True,
         "image_base64": result_layout_image_base64,
     }
 
-    return result_messgae
+    return success_response(result_data)
 
 
 # 透明图像添加水印接口
@@ -258,12 +279,12 @@ async def watermark(request: WatermarkRequest):
     else:
         result_image_bytes = save_image_dpi_to_bytes(img_with_watermark, None, dpi=request.dpi)
 
-    result_messgae = {
+    result_data = {
         "status": True,
         "image_base64": bytes_2_base64(result_image_bytes),
     }
 
-    return result_messgae
+    return success_response(result_data)
 
 
 # 调整图片大小接口
@@ -273,12 +294,12 @@ async def set_kb(request: ResizeRequest):
     img = base64_2_numpy(request.input_image_base64)
 
     result_image_bytes = resize_image_to_kb(img, None, int(request.kb), dpi=request.dpi)
-    result_messgae = {
+    result_data = {
         "status": True,
         "image_base64": bytes_2_base64(result_image_bytes),
     }
     
-    return result_messgae
+    return success_response(result_data)
 
 
 # 证件照裁剪接口
@@ -302,11 +323,11 @@ async def idphoto_crop_inference(request: CropRequest):
         )
     except FaceError:
         logger.error("未检测到人脸或检测到多个人脸")
-        result_message = {"status": False, "message": "未检测到人脸或检测到多个人脸"}
+        return error_response("未检测到人脸或检测到多个人脸")
 
     else:
         result_image_standard_bytes = save_image_dpi_to_bytes(result.standard, None, request.dpi)
-        result_message = {
+        result_data = {
             "status": True,
             "image_base64_standard": bytes_2_base64(result_image_standard_bytes),
         }
@@ -314,6 +335,6 @@ async def idphoto_crop_inference(request: CropRequest):
         # 如果hd为True, 则增加高清照结果（png 4通道图像）
         if request.hd:
             result_image_hd_bytes = save_image_dpi_to_bytes(result.hd, None, request.dpi)
-            result_message["image_base64_hd"] = bytes_2_base64(result_image_hd_bytes)
+            result_data["image_base64_hd"] = bytes_2_base64(result_image_hd_bytes)
 
-    return result_message 
+    return success_response(result_data) 
