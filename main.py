@@ -48,6 +48,10 @@ app = FastAPI(
             "name": "idphoto",
             "description": "证件照处理接口",
         },
+        {
+            "name": "inpainting",
+            "description": "图像修复接口",
+        }
     ]
 )
 
@@ -84,6 +88,10 @@ async def health_check():
 # 注册所有路由模块
 from src.routes import db_register_routes
 db_register_routes(app)
+
+# 注册所有 controller 模块
+from src.controllers.index import register_controllers
+register_controllers(app)
 
 # 配置 uvicorn 使用文件日志而不是控制台输出
 def configure_uvicorn_logging():
