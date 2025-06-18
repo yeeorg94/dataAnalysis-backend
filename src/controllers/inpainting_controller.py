@@ -1,15 +1,28 @@
-from fastapi import APIRouter, UploadFile, File, Form, Depends
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 import numpy as np
 from PIL import Image
 import io
 import os
 import torch
+import base64
 from pathlib import Path
 
 from iopaint.schema import InpaintRequest, HDStrategy, LDMSampler, SDSampler, ApiConfig, Device, RealESRGANModel, InteractiveSegModel, RemoveBGModel
 from iopaint.model_manager import ModelManager
 from iopaint.helper import load_img, numpy_to_bytes, pil_to_bytes
+from pydantic import BaseModel
+
+# 定义请求模型
+class InpaintingRequest(BaseModel):
+    image_base64: str
+    mask_base64: str
+    model_name: str = "lama"
+    prompt: str = ""
+    negative_prompt: str = ""
+    sd_steps: int = 50
+    sd_sampler: SDSampler = SDSampler.uni_pc
+    sd_strength: float = 1.0
 
 # 简单的内存缓存，用于存储模型
 # 在生产环境中，您可能需要更复杂的模型管理策略
@@ -73,43 +86,45 @@ def get_model_manager():
 
 router = APIRouter()
 
+def decode_base64_to_bytes(base64_str: str) -> bytes:
+    """将base64字符串解码为字节"""
+    # 移除可能存在的base64前缀（如data:image/png;base64,）
+    if ',' in base64_str:
+        base64_str = base64_str.split(',', 1)[1]
+    return base64.b64decode(base64_str)
+
 @router.post("/inpaint", tags=["inpainting"])
 async def inpaint(
-    image: UploadFile = File(..., description="原始图片"),
-    mask: UploadFile = File(..., description="蒙版图片，白色部分为修复区域"),
-    model_name: str = Form("lama", description="使用的修复模型"),
-    prompt: str = Form("", description="Prompt for diffusion models."),
-    negative_prompt: str = Form("", description="Negative prompt for diffusion models."),
-    sd_steps: int = Form(50, description="Steps for diffusion models."),
-    sd_sampler: SDSampler = Form(SDSampler.uni_pc, description="Sampler for diffusion model."),
-    sd_strength: float = Form(1.0, description="Strength for diffusion models."),
+    request: InpaintingRequest,
     manager: ModelManager = Depends(get_model_manager)
 ):
     """
-    接收图片和蒙版，使用 iopaint 进行图像修复。
+    接收原始图片和蒙版的base64编码，使用iopaint进行图像修复。
+    
+    - **image_base64**: 原始图片的base64编码
+    - **mask_base64**: 蒙版图片的base64编码，白色部分为修复区域
     """
     try:
-        # 加载图片和蒙版
-        image_bytes = await image.read()
-        mask_bytes = await mask.read()
+        # 解码base64字符串为字节
+        image_bytes = decode_base64_to_bytes(request.image_base64)
+        mask_bytes = decode_base64_to_bytes(request.mask_base64)
 
         # 将字节转换为 numpy 数组
-        # load_img 会返回一个 (H, W, 3) 的 RGB numpy 数组和一个 (H, W, 1) 的 alpha numpy 数组
         image_np, _ = load_img(image_bytes)
         mask_np, _ = load_img(mask_bytes, gray=True)
         
         # 将模型名称切换到请求的模型
-        if manager.name != model_name:
-            manager.switch(model_name)
+        if manager.name != request.model_name:
+            manager.switch(request.model_name)
 
         # 构造 InpaintRequest
         inpaint_request = InpaintRequest(
             hd_strategy=HDStrategy.CROP,
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            sd_steps=sd_steps,
-            sd_sampler=sd_sampler,
-            sd_strength=sd_strength,
+            prompt=request.prompt,
+            negative_prompt=request.negative_prompt,
+            sd_steps=request.sd_steps,
+            sd_sampler=request.sd_sampler,
+            sd_strength=request.sd_strength,
         )
 
         # 执行修复
