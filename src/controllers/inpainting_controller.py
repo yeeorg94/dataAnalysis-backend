@@ -22,7 +22,7 @@ logger = get_inpainting_logger()
 class InpaintingRequest(BaseModel):
     image_base64: str
     mask_base64: str
-    model_name: str = "lama"
+    model_name: str = "cv2"  # 默认使用cv2模型
     prompt: str = ""
     negative_prompt: str = ""
     sd_steps: int = 50
@@ -36,19 +36,21 @@ model_manager = None
 def get_model_manager():
     global model_manager
     if model_manager is None:
-        # 使用一个简约的配置来初始化 ModelManager
-        # 您可以根据需要进行调整
         # 创建一个默认的模型存储路径
         model_dir = os.path.join(os.path.expanduser("~"), ".cache", "iopaint")
         os.makedirs(model_dir, exist_ok=True)
 
         print(f"Initializing model manager with model dir: {model_dir}")
+        logger.info(f"初始化模型管理器，模型目录: {model_dir}")
 
+        # 默认模型为cv2，因为服务器只支持cv2
+        default_model = "cv2"
+        
         config = ApiConfig(
             host="127.0.0.1",
             port=8080,
             inbrowser=False,
-            model="lama",
+            model=default_model,  # 使用默认模型cv2
             no_half=False,
             low_mem=False,
             cpu_offload=False,
@@ -75,18 +77,26 @@ def get_model_manager():
             enable_restoreformer=False,
             restoreformer_device=Device.cpu,
         )
-        model_manager = ModelManager(
-            name=config.model,
-            device=torch.device(config.device),
-            no_half=config.no_half,
-            cpu_offload=config.cpu_offload,
-            disable_nsfw_checker=config.disable_nsfw_checker,
-            local_files_only=config.local_files_only,
-            cpu_textencoder=config.cpu_textencoder,
-            model_dir=Path(model_dir),
-            enable_controlnet=False,
-            controlnet_method=None,
-        )
+
+        try:
+            logger.info(f"尝试初始化模型管理器，使用模型: {config.model}")
+            model_manager = ModelManager(
+                name=config.model,
+                device=torch.device(config.device),
+                no_half=config.no_half,
+                cpu_offload=config.cpu_offload,
+                disable_nsfw_checker=config.disable_nsfw_checker,
+                local_files_only=config.local_files_only,
+                cpu_textencoder=config.cpu_textencoder,
+                model_dir=Path(model_dir),
+                enable_controlnet=False,
+                controlnet_method=None,
+            )
+            logger.info(f"模型管理器初始化成功，当前模型: {model_manager.name}")
+        except Exception as e:
+            logger.error(f"模型管理器初始化失败: {str(e)}", exc_info=True)
+            raise
+            
     return model_manager
 
 router = APIRouter()
@@ -111,6 +121,30 @@ async def inpaint(
     """
     logger.info(f"开始处理图像修复请求，使用模型: {request.model_name}")
     try:
+        # 检查请求的模型是否可用，如果不可用则使用当前已加载的模型
+        available_models = []
+        try:
+            # 尝试获取可用模型列表
+            from iopaint.model_manager import ModelManager as MM
+            available_models = MM.available_models()
+            logger.info(f"可用的模型列表: {available_models}")
+        except Exception as e:
+            logger.warning(f"获取可用模型列表失败: {str(e)}")
+            available_models = ["cv2"]  # 默认只有cv2可用
+            
+        # 如果请求的模型不可用，使用当前已加载的模型
+        if request.model_name not in available_models:
+            logger.warning(f"请求的模型 {request.model_name} 不可用，将使用当前模型: {manager.name}")
+            # 不进行模型切换
+        elif manager.name != request.model_name:
+            # 如果请求的模型可用且不是当前模型，则尝试切换
+            logger.info(f"切换模型从 {manager.name} 到 {request.model_name}")
+            try:
+                manager.switch(request.model_name)
+            except Exception as e:
+                logger.error(f"模型切换失败: {str(e)}")
+                # 模型切换失败，继续使用当前模型
+                
         # 解码base64字符串为字节
         logger.debug("解码base64字符串")
         image_bytes = decode_base64_to_bytes(request.image_base64)
@@ -121,11 +155,6 @@ async def inpaint(
         image_np, _ = load_img(image_bytes)
         mask_np, _ = load_img(mask_bytes, gray=True)
         
-        # 将模型名称切换到请求的模型
-        if manager.name != request.model_name:
-            logger.info(f"切换模型从 {manager.name} 到 {request.model_name}")
-            manager.switch(request.model_name)
-
         # 构造 InpaintRequest
         logger.debug(f"创建修复请求，提示词: {request.prompt}, 步数: {request.sd_steps}")
         inpaint_request = InpaintRequest(
