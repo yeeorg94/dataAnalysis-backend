@@ -109,20 +109,25 @@ async def inpaint(
     - **image_base64**: 原始图片的base64编码
     - **mask_base64**: 蒙版图片的base64编码，白色部分为修复区域
     """
+    logger.info(f"开始处理图像修复请求，使用模型: {request.model_name}")
     try:
         # 解码base64字符串为字节
+        logger.debug("解码base64字符串")
         image_bytes = decode_base64_to_bytes(request.image_base64)
         mask_bytes = decode_base64_to_bytes(request.mask_base64)
 
         # 将字节转换为 numpy 数组
+        logger.debug("转换图像到numpy数组")
         image_np, _ = load_img(image_bytes)
         mask_np, _ = load_img(mask_bytes, gray=True)
         
         # 将模型名称切换到请求的模型
         if manager.name != request.model_name:
+            logger.info(f"切换模型从 {manager.name} 到 {request.model_name}")
             manager.switch(request.model_name)
 
         # 构造 InpaintRequest
+        logger.debug(f"创建修复请求，提示词: {request.prompt}, 步数: {request.sd_steps}")
         inpaint_request = InpaintRequest(
             hd_strategy=HDStrategy.CROP,
             prompt=request.prompt,
@@ -133,16 +138,20 @@ async def inpaint(
         )
 
         # 执行修复
+        logger.info("开始执行图像修复")
         result_np = manager(image_np, mask_np, inpaint_request)
 
         # 将结果转换为字节流
+        logger.debug("转换结果到字节流")
         result_bytes = numpy_to_bytes(result_np, "png")
         
         # 将结果转换为base64编码
         result_base64 = base64.b64encode(result_bytes).decode('utf-8')
         
+        logger.info("图像修复成功完成")
         # 使用统一的响应格式返回结果
         return Response.success({"image_base64": result_base64}, "图像修复成功")
 
     except Exception as e:
+        logger.error(f"图像修复失败: {str(e)}", exc_info=True)
         return Response.error(str(e)) 
