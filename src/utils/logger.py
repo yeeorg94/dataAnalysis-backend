@@ -99,6 +99,10 @@ def get_db_logger():
     """获取数据库模块日志器"""
     return setup_logger('db')
 
+def get_inpainting_logger():
+    """获取图像修复模块日志器"""
+    return setup_logger('inpainting')
+
 # 配置根日志器，确保未捕获的日志也被记录
 def configure_root_logger():
     """配置根日志器，将所有未捕获的日志记录到文件"""

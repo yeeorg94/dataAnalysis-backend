@@ -6,7 +6,8 @@ from .logger import (
     get_global_logger,
     get_analyze_logger,
     get_tracking_logger,
-    get_db_logger
+    get_db_logger,
+    get_inpainting_logger
 )
 from .config import config, get_environment, EnvType
 from .response import Response
@@ -19,6 +20,7 @@ __all__ = [
     "get_test_logger",
     "get_global_logger",
     "get_analyze_logger",
+    "get_inpainting_logger",
     "config",
     "get_environment",
     "EnvType",

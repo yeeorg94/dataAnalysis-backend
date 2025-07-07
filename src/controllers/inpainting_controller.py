@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 import numpy as np
 from PIL import Image
 import io
@@ -12,6 +12,11 @@ from iopaint.schema import InpaintRequest, HDStrategy, LDMSampler, SDSampler, Ap
 from iopaint.model_manager import ModelManager
 from iopaint.helper import load_img, numpy_to_bytes, pil_to_bytes
 from pydantic import BaseModel
+from src.utils.response import Response
+from src.utils import get_inpainting_logger
+
+# 获取应用日志器
+logger = get_inpainting_logger()
 
 # 定义请求模型
 class InpaintingRequest(BaseModel):
@@ -132,8 +137,12 @@ async def inpaint(
 
         # 将结果转换为字节流
         result_bytes = numpy_to_bytes(result_np, "png")
-
-        return StreamingResponse(io.BytesIO(result_bytes), media_type="image/png")
+        
+        # 将结果转换为base64编码
+        result_base64 = base64.b64encode(result_bytes).decode('utf-8')
+        
+        # 使用统一的响应格式返回结果
+        return Response.success({"image_base64": result_base64}, "图像修复成功")
 
     except Exception as e:
-        return {"error": str(e)} 
+        return Response.error(str(e)) 
