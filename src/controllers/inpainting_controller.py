@@ -22,7 +22,7 @@ logger = get_inpainting_logger()
 class InpaintingRequest(BaseModel):
     image_base64: str
     mask_base64: str
-    model_name: str = "cv2"  # 默认使用cv2模型
+    model_name: str = "lama"  # 默认使用lama模型
     prompt: str = ""
     negative_prompt: str = ""
     sd_steps: int = 50
@@ -43,14 +43,30 @@ def get_model_manager():
         print(f"Initializing model manager with model dir: {model_dir}")
         logger.info(f"初始化模型管理器，模型目录: {model_dir}")
 
-        # 默认模型为cv2，因为服务器只支持cv2
-        default_model = "cv2"
+        # 检查可用的模型
+        available_models = []
+        preferred_model = "lama"  # 首选lama模型
+        
+        try:
+            # 尝试获取可用模型列表
+            from iopaint.model_manager import ModelManager as MM
+            available_models = MM.available_models()
+            logger.info(f"可用的模型列表: {available_models}")
+        except Exception as e:
+            logger.warning(f"获取可用模型列表失败: {str(e)}")
+            # 默认假设cv2可用
+            available_models = ["cv2"]
+        
+        # 如果首选模型不可用，则使用备用模型
+        if preferred_model not in available_models and len(available_models) > 0:
+            preferred_model = available_models[0]
+            logger.warning(f"首选模型 'lama' 不可用，降级使用: {preferred_model}")
         
         config = ApiConfig(
             host="127.0.0.1",
             port=8080,
             inbrowser=False,
-            model=default_model,  # 使用默认模型cv2
+            model=preferred_model,  # 使用可用的模型
             no_half=False,
             low_mem=False,
             cpu_offload=False,
@@ -95,7 +111,30 @@ def get_model_manager():
             logger.info(f"模型管理器初始化成功，当前模型: {model_manager.name}")
         except Exception as e:
             logger.error(f"模型管理器初始化失败: {str(e)}", exc_info=True)
-            raise
+            
+            # 如果初始化失败，尝试使用cv2模型
+            if config.model != "cv2" and "cv2" in available_models:
+                logger.info("尝试使用cv2模型作为备选")
+                config.model = "cv2"
+                try:
+                    model_manager = ModelManager(
+                        name=config.model,
+                        device=torch.device(config.device),
+                        no_half=config.no_half,
+                        cpu_offload=config.cpu_offload,
+                        disable_nsfw_checker=config.disable_nsfw_checker,
+                        local_files_only=config.local_files_only,
+                        cpu_textencoder=config.cpu_textencoder,
+                        model_dir=Path(model_dir),
+                        enable_controlnet=False,
+                        controlnet_method=None,
+                    )
+                    logger.info(f"成功使用备选模型初始化: {model_manager.name}")
+                except Exception as backup_e:
+                    logger.error(f"备选模型初始化也失败: {str(backup_e)}", exc_info=True)
+                    raise
+            else:
+                raise
             
     return model_manager
 
