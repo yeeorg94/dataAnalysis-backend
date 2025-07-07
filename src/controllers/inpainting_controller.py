@@ -28,6 +28,10 @@ class InpaintingRequest(BaseModel):
     sd_steps: int = 50
     sd_sampler: SDSampler = SDSampler.uni_pc
     sd_strength: float = 1.0
+    # 添加可选的高级参数，允许客户端覆盖默认值
+    hd_strategy: str = "ORIGINAL"  # 可选：ORIGINAL、CROP、RESIZE
+    match_histograms: bool = True  # 启用直方图匹配以保持颜色一致性
+    crop_margin_scale: float = 3.0  # 裁剪边缘比例
 
 # 简单的内存缓存，用于存储模型
 # 在生产环境中，您可能需要更复杂的模型管理策略
@@ -62,22 +66,23 @@ def get_model_manager():
             preferred_model = available_models[0]
             logger.warning(f"首选模型 'lama' 不可用，降级使用: {preferred_model}")
         
+        # 优化配置参数，根据官方推荐设置
         config = ApiConfig(
             host="127.0.0.1",
             port=8080,
             inbrowser=False,
             model=preferred_model,  # 使用可用的模型
-            no_half=False,
-            low_mem=False,
-            cpu_offload=False,
-            disable_nsfw_checker=False,
+            no_half=False,  # 使用半精度浮点数以节省内存
+            low_mem=False,  # 对于大多数现代服务器，可以设为False以获得更好性能
+            cpu_offload=True,  # 启用CPU卸载以优化内存使用
+            disable_nsfw_checker=True,  # 禁用NSFW检查器以提高性能
             local_files_only=False,
             cpu_textencoder=False,
-            device=Device.cpu,
+            device=Device.cpu,  # 使用CPU，如果有GPU可以改为Device.cuda
             input=None,
             mask_dir=None,
             output_dir=None,
-            quality=95,
+            quality=95,  # 设置较高的质量
             enable_interactive_seg=False,
             interactive_seg_model=InteractiveSegModel.vit_b,
             interactive_seg_device=Device.cpu,
@@ -194,15 +199,26 @@ async def inpaint(
         image_np, _ = load_img(image_bytes)
         mask_np, _ = load_img(mask_bytes, gray=True)
         
-        # 构造 InpaintRequest
+        # 构造 InpaintRequest，优化参数设置
         logger.debug(f"创建修复请求，提示词: {request.prompt}, 步数: {request.sd_steps}")
+        
+        # 确定HDStrategy枚举值
+        hd_strategy_map = {
+            "ORIGINAL": HDStrategy.ORIGINAL,
+            "CROP": HDStrategy.CROP,
+            "RESIZE": HDStrategy.RESIZE
+        }
+        hd_strategy = hd_strategy_map.get(request.hd_strategy.upper(), HDStrategy.ORIGINAL)
+        
         inpaint_request = InpaintRequest(
-            hd_strategy=HDStrategy.CROP,
+            hd_strategy=hd_strategy,  # 使用客户端指定的策略
             prompt=request.prompt,
             negative_prompt=request.negative_prompt,
             sd_steps=request.sd_steps,
             sd_sampler=request.sd_sampler,
             sd_strength=request.sd_strength,
+            match_histograms=request.match_histograms,  # 启用直方图匹配以保持颜色一致性
+            crop_margin_scale=request.crop_margin_scale,  # 裁剪边缘比例
         )
 
         # 执行修复
