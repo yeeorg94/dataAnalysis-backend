@@ -51,6 +51,10 @@ app = FastAPI(
         {
             "name": "inpainting",
             "description": "图像修复接口",
+        },
+        {
+            "name": "youtube",
+            "description": "YouTube视频下载接口",
         }
     ]
 )

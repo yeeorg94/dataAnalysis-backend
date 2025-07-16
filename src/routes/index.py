@@ -3,6 +3,7 @@ from .tracking import router as tracking_router
 from .analyze import router as analyze_router
 from .system import router as system_router
 from .idphoto import router as idphoto_router
+from .youtube import router as youtube_router
 from src.utils.db import DatabasePool
 import os
 
@@ -13,3 +14,4 @@ def db_register_routes(app: FastAPI):
     app.include_router(analyze_router)
     app.include_router(system_router)
     app.include_router(idphoto_router)
+    app.include_router(youtube_router)
