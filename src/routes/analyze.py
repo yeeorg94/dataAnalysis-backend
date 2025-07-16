@@ -31,6 +31,7 @@ router.include_router(youtube_router)
 # 无前缀的POST端点
 @router.post("")
 async def process_analyze(params: AnalyzeParams):
+    logger.info(f"处理URL (POST): {params.url}")
     try:
         url = params.url
         app_type = ""
