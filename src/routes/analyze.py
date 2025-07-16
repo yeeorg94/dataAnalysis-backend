@@ -4,12 +4,13 @@ from pydantic import BaseModel
 from src.app.kuaishou.index import Kuaishou
 from src.app.douyin.index import Douyin
 from src.app.weibo.index import Weibo
-from src.utils import config, get_analyze_logger
+from src.utils import config, get_analyze_logger,get_utils_logger
 from src.app.xiaohongshu.index import Xiaohongshu
 from src.routes.youtube import router as youtube_router
 
 # 获取应用日志器
 logger = get_analyze_logger()
+utils_logger = get_utils_logger()
 
 
 class AnalyzeParams(BaseModel):
@@ -31,7 +32,7 @@ router.include_router(youtube_router)
 # 无前缀的POST端点
 @router.post("")
 async def process_analyze(params: AnalyzeParams):
-    logger.info(f"处理URL (POST): {params.url}")
+    utils_logger.info(f"处理URL (POST): {params.url}")
     try:
         url = params.url
         app_type = ""
