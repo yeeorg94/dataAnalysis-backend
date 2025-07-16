@@ -19,7 +19,7 @@ logger = logging.getLogger("app")
 router = APIRouter(
     prefix="/youtube",
     tags=["youtube"],
-    responses={404: {"description": "Not found"}},
+    responses={404: {"description": "Not found dep"}},
 )
 
 @router.get("/download")
