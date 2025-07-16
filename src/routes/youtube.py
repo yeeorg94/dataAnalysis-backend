@@ -9,6 +9,8 @@ import tempfile
 import os
 import subprocess
 import shutil
+import sys
+import shlex
 
 # 获取应用日志器
 logger = logging.getLogger("app")
@@ -87,9 +89,13 @@ def _download_video(url: str, quality: str) -> dict:
                 # 尝试获取特定分辨率
                 format_option = f"best[height<={quality}][ext=mp4]/best[height<={quality}]"
             
-            # 构建yt-dlp命令
+            # 使用Python可执行文件路径调用yt-dlp模块，而不是依赖命令行工具
+            python_executable = sys.executable
+            
+            # 构建命令
             command = [
-                "yt-dlp",
+                python_executable,
+                "-m", "yt_dlp",
                 "-f", format_option,
                 "-o", output_path,
                 "--no-playlist",
@@ -97,7 +103,7 @@ def _download_video(url: str, quality: str) -> dict:
                 url
             ]
             
-            logger.info(f"执行命令: {' '.join(command)}")
+            logger.info(f"执行命令: {' '.join([shlex.quote(str(arg)) for arg in command])}")
             
             # 执行命令
             process = subprocess.Popen(

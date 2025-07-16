@@ -96,6 +96,7 @@ def start_server():
             workers=1,                  # 工作进程数
             log_config=None,            # 禁用 uvicorn 默认日志配置
             access_log=False,           # 禁用 uvicorn 访问日志
+            openapi_version="3.0.2"     # 设置OpenAPI版本
         )
     except Exception as e:
         # 在出错时尝试获取日志器

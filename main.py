@@ -30,6 +30,7 @@ app = FastAPI(
     description=config.API_DESCRIPTION,
     version=config.API_VERSION,
     debug=config.DEBUG,
+    openapi_version="3.0.2",  # 设置OpenAPI版本
     # 添加路由分组的标签描述
     openapi_tags=[
         {
