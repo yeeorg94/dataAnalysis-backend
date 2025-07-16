@@ -87,7 +87,7 @@ async def root():
 @app.get("/health")
 async def health_check():
     """健康检查端点"""
-    logger.info("执行健康检查")
+    logger.info("执行健康检查123131")
     return {"status": "健康", "环境": current_env}
     
 # 注册所有路由模块
