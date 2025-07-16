@@ -6,6 +6,7 @@ from src.app.douyin.index import Douyin
 from src.app.weibo.index import Weibo
 from src.utils import config, get_analyze_logger
 from src.app.xiaohongshu.index import Xiaohongshu
+from src.routes.youtube import router as youtube_router
 
 # 获取应用日志器
 logger = get_analyze_logger()
@@ -24,6 +25,8 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+# 包含YouTube路由
+router.include_router(youtube_router)
 
 # 无前缀的POST端点
 @router.post("")
