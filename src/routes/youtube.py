@@ -22,7 +22,7 @@ router = APIRouter(
     responses={404: {"description": "Not found dep"}},
 )
 
-@router.get("/download")
+@router.get("")
 async def download_youtube_video(
     url: str = Query(..., description="YouTube视频URL"),
     quality: Optional[str] = Query("best", description="视频质量: best, worst 或具体分辨率(如720)")
