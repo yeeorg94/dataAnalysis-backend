@@ -21,3 +21,4 @@ iopaint==1.6.0
 Pillow
 gradio
 yt_dlp>=2023.10.13
+huggingface_hub>=0.20.0
