@@ -50,8 +50,17 @@ def get_project_root():
 
 def get_local_lama_model_path():
     """
-    获取项目本地model目录中的lama模型路径
+    获取lama模型路径，优先检查系统缓存目录
     """
+    # 首先检查系统缓存目录
+    cache_model_dir = os.path.join(os.path.expanduser("~"), ".cache", "iopaint", "lama")
+    cache_model_file = os.path.join(cache_model_dir, "big-lama.pt")
+    
+    if os.path.exists(cache_model_file):
+        logger.info(f"在系统缓存目录找到lama模型: {cache_model_file}")
+        return cache_model_file
+    
+    # 如果系统缓存目录没有，检查项目本地目录
     project_root = get_project_root()
     local_model_dir = os.path.join(project_root, "model")
     local_lama_dir = os.path.join(local_model_dir, "lama")
@@ -61,29 +70,36 @@ def get_local_lama_model_path():
         logger.info(f"在项目本地目录找到lama模型: {local_model_file}")
         return local_model_file
     
-    logger.warning(f"警告: 项目本地目录未找到lama模型: {local_model_file}")
+    logger.warning(f"警告: 未找到lama模型文件")
     return None
 
 def get_model_manager():
     global model_manager
     if model_manager is None:
-        # 使用项目本地model目录
-        project_root = get_project_root()
-        model_dir = os.path.join(project_root, "model")
-        os.makedirs(model_dir, exist_ok=True)
-        
-        # 检查项目目录中的lama模型
+        # 检查lama模型路径
         local_model_file = get_local_lama_model_path()
+        
+        # 确定模型目录
+        if local_model_file:
+            # 使用模型所在的父目录作为模型目录
+            model_dir = os.path.dirname(os.path.dirname(local_model_file))
+            logger.info(f"使用模型所在目录: {model_dir}")
+        else:
+            # 如果没找到模型，使用系统缓存目录
+            model_dir = os.path.join(os.path.expanduser("~"), ".cache", "iopaint")
+            logger.warning(f"未找到lama模型，使用系统缓存目录: {model_dir}")
+        
+        os.makedirs(model_dir, exist_ok=True)
         
         # 如果找不到本地模型，记录警告
         if not local_model_file:
-            logger.warning("未找到本地lama模型，模型质量可能受到影响")
+            logger.warning("未找到lama模型，模型质量可能受到影响")
             preferred_model = "cv2"
             logger.warning(f"将使用cv2作为备选模型")
         else:
             # 如果找到了本地模型，强制使用lama
             preferred_model = "lama"
-            logger.info(f"已找到本地lama模型，将优先使用")
+            logger.info(f"已找到lama模型，将优先使用")
         
         logger.info(f"初始化模型管理器，模型目录: {model_dir}")
         
@@ -138,7 +154,7 @@ def get_model_manager():
                 disable_nsfw_checker=config.disable_nsfw_checker,
                 local_files_only=config.local_files_only,  # 仅使用本地文件
                 cpu_textencoder=config.cpu_textencoder,
-                model_dir=Path(model_dir),  # 使用项目本地model目录
+                model_dir=Path(model_dir),  # 使用确定的模型目录
                 enable_controlnet=False,
                 controlnet_method=None,
                 # 增强功能配置
