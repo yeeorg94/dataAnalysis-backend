@@ -245,6 +245,17 @@ async def inpaint(
         image_np, _ = load_img(image_bytes)
         mask_np, _ = load_img(mask_bytes, gray=True)
         
+        # 检查并确保图像和蒙版尺寸一致
+        logger.debug(f"原始图像尺寸: {image_np.shape}, 蒙版尺寸: {mask_np.shape}")
+        if image_np.shape[:2] != mask_np.shape[:2]:
+            logger.warning(f"图像和蒙版尺寸不一致，正在调整蒙版尺寸以匹配图像")
+            # 使用PIL调整蒙版尺寸以匹配原图
+            from PIL import Image
+            mask_pil = Image.fromarray(mask_np)
+            mask_pil = mask_pil.resize((image_np.shape[1], image_np.shape[0]), Image.LANCZOS)
+            mask_np = np.array(mask_pil)
+            logger.debug(f"调整后的蒙版尺寸: {mask_np.shape}")
+        
         # 构造 InpaintRequest，优化参数设置
         logger.debug(f"创建修复请求，提示词: {request.prompt}, 步数: {request.sd_steps}")
         
