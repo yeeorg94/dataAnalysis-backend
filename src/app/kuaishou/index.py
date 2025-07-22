@@ -50,7 +50,10 @@ class Kuaishou:
             self.image_data = {}
             self.video_data = {}
             scripts = self.soup.find_all("script")
-
+            
+            # 初始化data_dict为空字典，确保即使没找到数据也有这个属性
+            self.data_dict = {}
+            
             for script in scripts:
                 if script.string and "window.INIT_STATE" in script.string:
                     data_text = script.string.split("window.INIT_STATE = ")[1]
@@ -58,6 +61,11 @@ class Kuaishou:
                     data_dict = json.loads(data_text)
                     self.data_dict = data_dict
                     break
+            
+            # 如果data_dict为空，记录日志
+            if not self.data_dict:
+                logger.warning("未能找到快手页面中的数据信息")
+            
             self.get_dict_data()
         except Exception as e:
             raise e
@@ -65,7 +73,16 @@ class Kuaishou:
     def get_dict_data(self):
         """获取dict数据"""
         try:
+            # 如果data_dict为空，直接返回
+            if not self.data_dict:
+                logger.warning("data_dict为空，无法提取数据")
+                return
+            
             data_list = list(self.data_dict.values())
+            if not data_list or len(data_list) <= 2:
+                logger.warning("data_dict不包含足够的数据")
+                return
+            
             obj1_data = data_list[2] if len(data_list) > 2 else {}
             obj2_data = obj1_data.get("photo", {})
             obj3_data = obj2_data.get("manifest", {})
