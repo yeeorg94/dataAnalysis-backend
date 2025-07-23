@@ -2,13 +2,34 @@
 
 一个基于 FastAPI 的综合性多媒体内容分析与处理 API 服务，支持社交媒体内容解析、证件照处理、图像修复、YouTube视频下载、用户行为埋点等功能。
 
-## 项目结构
+基于FastAPI的社交媒体数据分析API服务，支持从小红书、抖音、快手、微博等平台提取和分析数据。
+
+## 📑 功能特点
+
+- ✅ **多平台支持**：同时支持小红书、抖音、快手、微博等主流社交媒体平台
+- ✅ **数据提取**：自动解析分享链接，提取包括文字、图片、视频、用户信息等多维度数据
+- ✅ **灵活输出**：支持JSON和HTML两种输出格式，适应不同应用场景
+- ✅ **高性能**：采用FastAPI异步框架，支持高并发请求处理
+- ✅ **安全可靠**：完善的日志记录和异常处理机制
+- ✅ **易于扩展**：模块化设计，便于添加新平台支持
+
+## 🧰 技术栈
+
+- **Web框架**：FastAPI
+- **服务器**：Uvicorn
+- **数据解析**：BeautifulSoup4、lxml、Selenium
+- **数据库**：MySQL (通过PyMySQL和DBUtils)
+- **HTTP客户端**：Requests、httpx
+- **数据处理**：Pandas
+
+## 🏗️ 项目结构
 
 ```
 .
 ├── main.py              # 主应用入口
 ├── start_server.py      # 服务启动脚本
 ├── deploy.sh            # 生产环境部署脚本
+├── run_dev.sh           # 开发环境启动脚本
 ├── requirements.txt     # 依赖列表
 ├── config.template.ini  # 配置文件模板
 ├── logs/               # 日志目录
@@ -28,14 +49,50 @@
     └── utils/          # 工具函数
 ```
 
-## 环境配置
+## 📝 API文档
+
+### 主要接口
+
+| 端点 | 方法 | 描述 |
+|------|------|------|
+| `/analyze` | POST | 通用数据分析接口，自动识别平台类型 |
+| `/analyze/xiaohongshu` | POST | 小红书数据分析接口 |
+| `/analyze/douyin` | POST | 抖音数据分析接口 |
+| `/analyze/kuaishou` | POST | 快手数据分析接口 |
+| `/analyze/weibo` | POST | 微博数据分析接口 |
+| `/health` | GET | 健康检查接口 |
+
+### 请求参数
+
+```json
+{
+  "url": "社交媒体分享链接",
+  "type": "png",  // 可选，图片类型，支持 "png" 或 "webp"
+  "format": "json" // 可选，返回格式，支持 "json" 或 "html"
+}
+```
+
+### 示例请求
+
+```bash
+curl -X 'POST' \
+  'http://localhost:8000/analyze' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "url": "https://www.xiaohongshu.com/explore/example",
+  "type": "png",
+  "format": "json"
+}'
+```
+
+## 🛠️ 环境配置
 
 项目支持两种运行环境：
 
 - **development**: 开发环境（默认）
 - **production**: 生产环境
 
-## 数据库配置
+## 📊 数据库配置
 
 ### 配置文件说明
 
@@ -61,22 +118,14 @@ database = your_database
 - 支持连接自动回收
 - 支持连接健康检查
 
-使用示例：
-```python
-from src.utils.db import DatabaseConnection
-
-with DatabaseConnection() as db:
-    result = db.execute_query("SELECT * FROM your_table")
-```
-
-## 安装和部署
+## 📦 安装和部署
 
 ### 开发环境
 
 1. 克隆项目：
 ```bash
-git clone [repository_url]
-cd dataAnalysis-backend
+git clone https://github.com/yourusername/social-media-analysis-api.git
+cd social-media-analysis-api
 ```
 
 2. 创建并激活虚拟环境：
@@ -127,7 +176,15 @@ chmod +x deploy.sh
 - 安装/更新依赖
 - 重启服务
 
-## 日志
+### 作为守护进程运行
+
+项目提供了在后台作为守护进程运行的脚本:
+
+```bash
+./run_as_daemon.sh
+```
+
+## 📝 日志管理
 
 - 应用日志：`logs/deploy_*.log`
 - 进程 ID：`logs/server.pid`
@@ -285,7 +342,7 @@ curl "http://localhost:8000/analyze/youtube?url=https://www.youtube.com/watch?v=
 - **健康检查**: 系统状态监控
 - **环境隔离**: 开发/生产环境配置分离
 
-## 问题排查
+## 🔍 问题排查
 
 ### 常见问题及解决方案
 
