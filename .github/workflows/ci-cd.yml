@@ -23,8 +23,8 @@ jobs:
         uses: docker/build-push-action@v2.3.0
         with:
           context: .
-          file: Dockerfile.minimal
           push: true
+          no-cache: true
           tags: |
             ${{ secrets.DOCKER_REGISTRY_SERVER_URL }}/xiaobe/qushuiyin:latest
             ${{ secrets.DOCKER_REGISTRY_SERVER_URL }}/xiaobe/qushuiyin:${{ github.sha }}

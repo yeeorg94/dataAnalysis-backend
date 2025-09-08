@@ -18,12 +18,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     curl \
+    pkg-config \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libgomp1 \
+    libglib2.0-dev \
+    libgl1-mesa-glx \
     && pip install --no-cache-dir -r requirements.txt \
-    && apt-get purge -y gcc g++ \
+    && apt-get purge -y gcc g++ pkg-config libglib2.0-dev \
     && apt-get autoremove -y \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /root/.cache/pip
+    && rm -rf /var/lib/apt/lists/* /root/.cache/pip
 
 # 复制项目文件（.dockerignore会排除不需要的文件）
 COPY . .
