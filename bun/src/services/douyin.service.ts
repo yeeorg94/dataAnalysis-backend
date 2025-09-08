@@ -4,7 +4,7 @@ import { UrlExtractor } from '../utils/url-extractor.js';
 import { ResponseFormatter } from '../utils/response.js';
 import { createLogger } from '../utils/logger.js';
 import { config } from '../utils/config.js';
-import { getWhitelistRealAddress } from '../utils/redirect-handler.js';
+import { getWhitelistRealAddress } from '../utils/redirect-handler.ts';
 
 const logger = createLogger('DouyinService');
 
