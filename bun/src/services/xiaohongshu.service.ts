@@ -309,7 +309,30 @@ export class XiaohongshuService {
       }
       
       const images = imageList.map((img: any) => {
-        const imageUrl = img.urlSizeLarge || img.url || img.urlDefault;
+        // 优先使用无水印的URL格式
+        // notes_pre_post 格式通常是无水印的，UUID格式可能带水印
+        let imageUrl = '';
+        
+        // 检查是否有 notes_pre_post 格式的URL（无水印）
+        if (img.urlSizeLarge && img.urlSizeLarge.includes('notes_pre_post')) {
+          imageUrl = img.urlSizeLarge;
+        } else if (img.url && img.url.includes('notes_pre_post')) {
+          imageUrl = img.url;
+        } else if (img.urlDefault && img.urlDefault.includes('notes_pre_post')) {
+          imageUrl = img.urlDefault;
+        } else {
+          // 如果没有 notes_pre_post 格式，按原优先级选择
+          imageUrl = img.urlSizeLarge || img.url || img.urlDefault;
+          
+          // 尝试将UUID格式转换为无水印格式
+          if (imageUrl && this.isUuidFormat(imageUrl)) {
+            const convertedUrl = this.tryConvertToNoWatermark(imageUrl);
+            if (convertedUrl) {
+              imageUrl = convertedUrl;
+            }
+          }
+        }
+        
         const liveUrl = img.livePhoto?.stream?.h264?.[0]?.masterUrl || img.stream?.h264?.[0]?.masterUrl || img.livePhoto || img.videoUrl;
         
         return {
@@ -335,6 +358,34 @@ export class XiaohongshuService {
   }
 
 
+
+  /**
+   * 检查是否为UUID格式的URL
+   */
+  private isUuidFormat(url: string): boolean {
+    // UUID格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    const uuidPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+    return uuidPattern.test(url);
+  }
+
+  /**
+   * 尝试将UUID格式的URL转换为无水印格式
+   */
+  private tryConvertToNoWatermark(url: string): string | null {
+    try {
+      // 如果URL已经包含imageView2参数，说明可能是无水印的
+      if (url.includes('imageView2')) {
+        return url;
+      }
+      
+      // 为UUID格式的URL添加imageView2参数以获取无水印版本
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}imageView2/2/w/1080/format/jpg`;
+    } catch (error) {
+      logger.warn('转换URL格式失败', { url, error: error.message });
+      return null;
+    }
+  }
 
   /**
    * 转换为MediaData格式

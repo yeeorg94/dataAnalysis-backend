@@ -4,6 +4,7 @@ import { UrlExtractor } from '../utils/url-extractor.js';
 import { ResponseFormatter } from '../utils/response.js';
 import { createLogger } from '../utils/logger.js';
 import { config } from '../utils/config.js';
+import { getWhitelistRealAddress } from '../utils/redirect-handler.js';
 
 const logger = createLogger('DouyinService');
 
@@ -128,7 +129,7 @@ export class DouyinService {
       // 获取视频数据
       const video = itemData.video || {};
       if (Object.keys(video).length > 0) {
-        this.parseVideoData(video);
+        await this.parseVideoData(video);
       }
     } catch (error) {
       logger.error('解析数据字典失败', error);
@@ -155,7 +156,7 @@ export class DouyinService {
   /**
    * 解析视频数据
    */
-  private parseVideoData(video: any): void {
+  private async parseVideoData(video: any): Promise<void> {
     try {
       const playAddr = video.play_addr || {};
       const urlList = playAddr.url_list || [];
@@ -168,7 +169,17 @@ export class DouyinService {
           this.video = '';
         } else {
           // 去水印处理：将playwm替换为play
-          this.video = videoUrl.replace('playwm', 'play');
+          videoUrl = videoUrl.replace('playwm', 'play');
+          
+          // 处理302重定向，获取白名单中的真实地址
+          try {
+            const realAddress = await getWhitelistRealAddress(videoUrl, 5);
+            this.video = realAddress;
+            logger.info(`视频地址处理完成: ${videoUrl} -> ${realAddress}`);
+          } catch (error) {
+            logger.error('处理视频地址302重定向失败', error);
+            this.video = videoUrl; // 失败时使用原地址
+          }
         }
       }
     } catch (error) {
