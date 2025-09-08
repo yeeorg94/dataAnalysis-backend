@@ -1,5 +1,5 @@
 # 多阶段构建：构建阶段
-FROM python:3.9-slim as builder
+FROM python:3.9-slim AS builder
 
 # 安装构建时需要的系统依赖
 RUN apt-get update && apt-get install -y \
@@ -20,15 +20,11 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 FROM python:3.9-slim
 
 # 安装运行时必需的系统依赖
-RUN apt-get update && apt-get install -y \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgomp1 \
-    libgthread-2.0-0 \
-    libgl1-mesa-glx \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    ca-certificates \
+    libgomp1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
