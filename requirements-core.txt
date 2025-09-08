@@ -1,0 +1,43 @@
+# 核心Web服务依赖 (最小化版本)
+requests==2.31.0
+fastapi>=0.108.0
+uvicorn==0.23.2
+httpx==0.25.0
+
+# 数据处理
+pandas==2.1.1
+numpy<=1.26.4
+Pillow
+
+# 网页解析
+lxml==5.3.1
+beautifulsoup4==4.13.3
+
+# 数据库
+mysql-connector-python>=8.0.0
+pymysql==1.1.1
+dbutils==3.1.0
+
+# 基础工具
+blinker==1.7.0
+PyExecJS==1.5.1
+tqdm==4.67.1
+
+# === 以下是大体积包，按需启用 ===
+# 
+# 计算机视觉 (约500MB+)
+# opencv-python>=4.8.1.78
+# onnxruntime>=1.15.0
+# mtcnn-runtime==1.0.0
+#
+# 图像处理和AI (约1GB+)  
+# iopaint==1.6.0
+# gradio
+# huggingface_hub>=0.20.0
+#
+# 浏览器自动化 (约200MB+)
+# selenium==4.30.0
+# selenium-wire==5.1.0
+#
+# 视频下载 (约100MB+)
+# yt_dlp>=2023.10.13
