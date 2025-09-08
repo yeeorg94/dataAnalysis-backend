@@ -1,0 +1,72 @@
+# Git相关
+.git
+.gitignore
+.github
+
+# 开发工具
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Python相关
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# 文档和说明
+README.md
+docs/
+*.md
+
+# 部署脚本
+deploy.sh
+run_dev.sh
+run_as_daemon.sh
+daemon_instructions.txt
+
+# 配置模板
+config.template.ini
+
+# 存储目录
+storage/
+
+# 资源文件（如果不需要在容器中）
+assets/
+
+# 日志文件
+logs/
+*.log
+
+# 临时文件
+tmp/
+temp/
+.tmp
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 测试文件
+test/
+tests/
+*_test.py
+test_*.py
