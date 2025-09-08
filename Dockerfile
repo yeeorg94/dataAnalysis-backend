@@ -25,7 +25,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender1 \
     libgomp1 \
     libglib2.0-dev \
-    libgl1-mesa-glx \
     && pip install --no-cache-dir -r requirements.txt \
     && apt-get purge -y gcc g++ pkg-config libglib2.0-dev \
     && apt-get autoremove -y \
